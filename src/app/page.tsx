@@ -1,13 +1,20 @@
-import AuthForm from "../components/form/AuthForm";
+import Aside from "@/components/layout/aside/Aside";
+import Header from "@/components/layout/header/Header"
+import Main from "@/components/layout/main/Main"
+
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 
 export default function Home() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
-      <main className="grid grid-cols-1 place-items-center h-full">
-        <h2 className="">Bienvenidos al repositorio!</h2>
-        <h1 className="text-4xl">Hola Mundo</h1>
-        <AuthForm /> {}
-      </main>
+    <div className="flex flex-col items-center justify-center min-h-screen">          
+      <SidebarProvider>               
+        <Aside />
+        <main className="w-full">          
+          <Header />           
+          <Main />
+        </main>
+      </SidebarProvider>      
     </div>
   );
 }
+

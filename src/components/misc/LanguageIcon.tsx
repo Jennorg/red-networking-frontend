@@ -13,10 +13,10 @@ export function LanguageIcon({
   return (
     <>
       <div className="flex justify-center items-center gap-2">
-        <Avatar className="w-5 h-5">
+        <Avatar className=" sm:w-5 sm:h-5 h-4 w-4">
           <AvatarImage src={languageIcon} alt={"icon-img"} />
         </Avatar>
-        <p>{languageName}</p>
+        <p className="text-xs sm:text-sm">{languageName}</p>
       </div>
     </>
   );
