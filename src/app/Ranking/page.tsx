@@ -14,12 +14,12 @@ export default function Ranking() {
   return (
     <>
       <DashboardLayout>
-        <div className=" flex flex-col  h-full w-full p-2 sm:p-5 lg:p-10 gap-5 sm:gap-10">
+        <div className=" flex flex-col  h-full w-full gap-5 p-2 sm:p-5 lg:p-10">
           <div className="flex flex-col gap-2">
-            <h1 className="text-sm sm:text-2xl lg:text-4xl font-medium  text-white ">
+            <h1 className=" text-sm sm:text-2xl lg:text-4xl font-medium  text-white pl-12 sm:pl-10 lg:pl-0">
               Ranking de Proyectos
             </h1>
-            <h2 className="text-xs sm:text-sm font-medium  text-white ">
+            <h2 className="text-xs sm:text-sm font-medium  text-white  pl-12 sm:pl-10 lg:pl-0">
               Los proyectos más populares y destacados de la comunidad
             </h2>
           </div>

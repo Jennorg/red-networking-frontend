@@ -10,7 +10,7 @@ export default function Header() {
     <header className="flex p-2 bg-gray-800 w-full items-center border-b border-gray-600">
       {/* Contenedor para el texto y el buscador */}
       <div className="flex items-center gap-4">
-        <p className="text-white text-sm pl-2">
+        <p className=" hidden md:block text-white text-sm pl-2">
           Universidad Nacional Experimental de Guayana
         </p>
         <div className="relative flex items-center">

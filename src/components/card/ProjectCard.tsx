@@ -68,7 +68,7 @@ export function ProjectCard({
           {/* Contenedor principal */}
           <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-3">
             {/* Iconos (siempre a la izquierda) */}
-            <div className="flex flex-col lg:flex-row gap-4">
+            <div className="flex flex-row sm:flex-col lg:flex-col gap-4">
               <LanguageIcon languageName="python" languageIcon="python.PNG" />
               <LanguageIcon languageName="javascript" languageIcon="js.PNG" />
             </div>
