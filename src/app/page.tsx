@@ -6,15 +6,12 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 
 export default function Home() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen">          
-      <SidebarProvider>               
+    <div className="flex flex-col min-h-screen">
+      <Header />           
+      <div className="flex flex-1 overflow-hidden">
         <Aside />
-        <main className="w-full">          
-          <Header />           
-          <Main />
-        </main>
-      </SidebarProvider>      
+        <Main />
+      </div>
     </div>
   );
 }
-

@@ -1,11 +1,12 @@
 import React from "react";
-import Bell from '/public/icons/bell.svg'
+
+import { Bell } from "lucide-react";
 
 const Notifications = () => {
   return(
-    <>
-      <Bell />
-    </>
+    <button className="text-white hover:bg-gray-700 p-1 rounded-full">
+      <Bell className="size-5" />
+    </button>
   )
 }
 

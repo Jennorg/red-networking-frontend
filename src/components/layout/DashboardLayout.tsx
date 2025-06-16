@@ -1,6 +1,6 @@
 "use client";
 
-import Header from "./Header";
+import Header from "@/components/layout/header/Header";
 import { Sidebar } from "./Sidebar";
 
 interface DashboardLayoutProps {

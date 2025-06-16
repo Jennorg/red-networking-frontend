@@ -6,8 +6,8 @@ const MyProyects = () => {
   return(
     <div>
       <div className="flex gap-1">
-        <Folder />
-        <h2>Tus Proyectos</h2>
+        <Folder className="fill-amber-400"/>
+        <h2 className="text-xl font-semibold">Tus Proyectos</h2>
       </div>
       <ProyectItem />
       <ProyectItem />
