@@ -2,7 +2,7 @@
 Este es un proyecto que trata sobre conectar a los estudiantes de distintas carreras de nuestra casa de estudios **UNEG**, esta sera una plataforma web intuitiva y responsiva, donde los estudiantes podran compartir proyectos para ser evaluados por profesores, habra un ranking donde todos podran revisar los proyectos con mejor calificacion y tambien podran opinar sobre ello. Esta plataforma busca potenciar el desempeño de los estudiantes y los valores, se busca que los usuarios puedan conseguir inspiracion, ideas y aprobacion con cada proyecto que se suba.
 
 ## Tecnologias Frontend
-React y Next.js
+React, Next.js, Typescript y TailwindCSS
 
 ## Dirigido
 Esto forma parte de un proyecto dirigido a la Unidad Curricular _Desarrollos Web_, con la profesora _Karla López_.
