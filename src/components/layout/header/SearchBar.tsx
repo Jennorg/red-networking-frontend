@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Input } from "@/components/ui/input";
-import { Bell, ChevronDown, Plus, Search } from "lucide-react";
+import { Search } from "lucide-react";
 
 const SearchBar = () => {
   return(

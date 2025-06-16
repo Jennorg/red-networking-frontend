@@ -2,7 +2,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Car, Eye, Star, MessageCircleMore, Heart } from "lucide-react";
+import { Eye, Star, MessageCircleMore, Heart } from "lucide-react";
 import { LanguageIcon } from "../misc/LanguageIcon";
 
 interface ProjectCardProps {

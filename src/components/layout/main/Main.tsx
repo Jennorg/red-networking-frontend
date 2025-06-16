@@ -1,9 +1,6 @@
 import React from "react";
 
-import Title from "./Title";
 import { ProjectCard } from "@/components/card/ProjectCard";
-
-import Star from "/public/icons/star.svg"
 
 import {
   Pagination,
