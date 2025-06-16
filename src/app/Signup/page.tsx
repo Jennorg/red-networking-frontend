@@ -68,7 +68,7 @@ export default function Signup() {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-[#161B22]">
-      <div className="flex-[3] flex flex-col justify-center items-center px-8 py-10 mx-6">
+      <div className="flex-[3] flex flex-col justify-center items-center px-8 py-6 mx-6">
         <Image src="/uneg-logo.png" alt="UNEG" width={80} height={80} />
         <h1 className="text-3xl font-bold mt-5 text-white">Registro</h1>
         <p className="text-sm text-white mt-2">
@@ -191,16 +191,6 @@ export default function Signup() {
             </Button>
           </form>
         </Form>
-        <div className="flex items-center justify-center my-4 w-full max-w-sm">
-          <span className="mx-2 text-white">o</span>
-        </div>
-        <Button
-          variant="outline"
-          className="w-full max-w-sm flex items-center justify-center gap-2 hover:bg-gray-300"
-        >
-          Regístrate con Google
-          <Image src="/google.svg" alt="Google" width={15} height={15} />
-        </Button>
 
         <p className="text-sm text-white mt-4">
           Ya tienes una cuenta?{" "}
