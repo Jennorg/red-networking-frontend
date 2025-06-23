@@ -1,7 +1,7 @@
 "use client";
 
-import Header from "./Header";
-import { Sidebar } from "./Sidebar";
+import Header from "@/components/layout/header/Header";
+import Aside from "@/components/layout/aside/Aside";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -13,7 +13,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       <div className="flex flex-col min-h-screen">
         <Header />
         <div className="flex flex-1 overflow-hidden">
-          <Sidebar /> {/* Asumo que Sidebar ya tiene sus estilos de width */}
+          <Aside />
           <main className="flex-1 overflow-auto bg-gray-950">{children}</main>
         </div>
       </div>
