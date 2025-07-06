@@ -134,13 +134,21 @@ export default function Ranking() {
           {projects.map((project, index) => (
             <ProjectCard
               key={project.id || index}
-              position={index + 1}
-              avatarURL={project.avatarURL || "avatar.png"}
-              name={project.name}
-              username={project.username}
+              _id={project.id?.toString() ?? index.toString()}
+              title={project.name}
+              authors={[project.username]}
+              date={""}
+              tags={[]}
+              repositoryLink={""}
+              tools={[]}
+              avatarURL={project.avatarURL}
               stars={project.stars}
               views={project.views}
-              projectDescription={project.description}
+              description={project.description}
+              position={index + 1}
+              image={""}
+              document={""}
+              __v={0}
             />
           ))}
         </div>
