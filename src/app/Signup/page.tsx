@@ -22,7 +22,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { CalendarIcon, EyeIcon, EyeOffIcon } from "lucide-react";
 import { useState } from "react";
-import { cn } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 import axios from "axios";
@@ -106,7 +105,7 @@ export default function Signup() {
         setTimeout(() => {
           router.push("/");
         }, 1500);
-      }, 1500);
+      }, 1000);
     } else {
       toast.error(login.data.message || "No se pudo iniciar sesión");
     }
@@ -121,7 +120,7 @@ export default function Signup() {
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-[#161B22]">
       <div className="flex-[3] flex flex-col justify-center items-center px-8 py-6 mx-6">
-        <Image src="/uneg-logo.png" alt="UNEG" width={80} height={80} />
+        <Image src="/pngs/uneg.png" alt="UNEG" width={80} height={80} />
         <h1 className="text-3xl font-bold mt-5 text-white">Registro</h1>
         <p className="text-sm text-white mt-2">
           Regístrate y disfruta de un mundo de posibilidades
@@ -253,7 +252,7 @@ export default function Signup() {
       </div>
       <div className="hidden md:flex flex-[6] items-center justify-center rounded-lg relative m-3">
         <Image
-          src="/image_signup.png"
+          src="/pngs/image_signup.png"
           alt="Background"
           fill
           className="object-cover rounded-lg"
