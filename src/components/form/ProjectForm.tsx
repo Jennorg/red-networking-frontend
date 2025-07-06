@@ -32,7 +32,12 @@ import { MultiSelect } from "@/components/ui/multiselect";
 
 const projectUploadSchema = z.object({
   title: z.string().min(2, { message: "El título es obligatorio" }),
-  authors: z.string().min(2, { message: "Autores requeridos" }),
+  authors: z
+    .string()
+    .min(1, { message: "Debes ingresar al menos un autor" })
+    .refine((val) => val.split(",").filter((a) => a.trim() !== "").length > 0, {
+      message: "Ingresa al menos un autor válido",
+    }),
   date: z.date({ required_error: "La fecha es obligatoria" }),
   tags: z
     .array(z.string())
@@ -46,6 +51,15 @@ const projectUploadSchema = z.object({
   document: z.any().optional(),
 });
 type ProjectUploadValues = z.infer<typeof projectUploadSchema>;
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+  });
+}
 
 export default function ProjectUploadForm() {
   const form = useForm<ProjectUploadValues>({
@@ -63,9 +77,32 @@ export default function ProjectUploadForm() {
     },
   });
 
-  function onSubmit(values: ProjectUploadValues) {
-    // Lógica para enviar el formulario
-    console.log(values);
+async function onSubmit(values: ProjectUploadValues) {
+    try {
+      const imageBase64 = values.image ? await fileToBase64(values.image) : null;
+      const documentBase64 = values.document ? await fileToBase64(values.document) : null;
+
+      const payload = {
+        ...values,
+        authors: values.authors.split(",").map((a) => a.trim()), 
+        date: values.date.toISOString(), 
+        image: imageBase64,
+        document: documentBase64,
+      };
+
+     // const res = await axios.post("/api/subida_proyecto", payload); // 
+      //console.log("Proyecto creado:", res.data);
+
+      console.log("--- Prueba de Payload del Formulario ---");
+    console.log("Valores originales del formulario:", values);
+    console.log("Payload Final a enviar:", payload);
+    console.log("---------------------------------------");
+
+    alert("Formulario procesado localmente. Revisa la consola para el payload.");
+    
+  } catch (error: any) {
+      console.error("Error al enviar:", error?.response?.data || error.message);
+    }
   }
 
   return (
@@ -99,7 +136,7 @@ export default function ProjectUploadForm() {
             )}
           />
 
-          {/* Autores y Fecha */}
+          {/* Autores */}
           <div className="flex flex-col md:flex-row gap-4">
             <FormField
               control={form.control}
@@ -112,7 +149,7 @@ export default function ProjectUploadForm() {
                   <FormControl>
                     <Input
                       className="bg-white text-black"
-                      placeholder="Autores"
+                      placeholder="Ej: Maria Fernandez, Juan Pérez"
                       {...field}
                     />
                   </FormControl>
@@ -120,7 +157,8 @@ export default function ProjectUploadForm() {
                 </FormItem>
               )}
             />
-
+            
+            {/* Fecha */}
             <FormField
               control={form.control}
               name="date"
@@ -194,6 +232,8 @@ export default function ProjectUploadForm() {
               </FormItem>
             )}
           />
+
+          {/* Repositorio */}
 
           <FormField
               control={form.control}
