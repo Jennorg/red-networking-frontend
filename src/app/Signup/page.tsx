@@ -24,6 +24,9 @@ import { CalendarIcon, EyeIcon, EyeOffIcon } from "lucide-react";
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import axios from "axios";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 const today = new Date();
 const maxAllowedDate = new Date(
@@ -50,6 +53,8 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export default function Signup() {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -61,8 +66,55 @@ export default function Signup() {
     },
   });
 
-  function onSubmit(values: FormValues) {
-    console.log(values);
+
+  async function onSubmit(values: FormValues) {
+    const { name, email, password, birthdate } = values;
+
+    try {
+      setIsLoading(true);
+      const registro = await axios.post(
+        "https://red-networking-backend.vercel.app/auth/register",
+        {
+          name,
+          email,
+          password,
+          born: birthdate.toISOString().split("T")[0],
+        }
+      );
+      setIsLoading(false);
+
+      if (!registro.data.proceso) {
+      toast.error(registro.data.message || "Error al registrarse");
+      return;
+     }
+
+      toast.success("Registro exitoso.");
+
+      const login = await axios.post("https://red-networking-backend.vercel.app/auth/login", {
+        email,
+        password,
+      });
+
+      if (login.data.proceso) {
+      const token = login.data.token;
+      localStorage.setItem("token", token);
+
+      setTimeout(() => {
+        toast.info("Inicio de sesión automático. Redirigiendo...");
+
+        setTimeout(() => {
+          router.push("/");
+        }, 1500);
+      }, 1500);
+    } else {
+      toast.error(login.data.message || "No se pudo iniciar sesión");
+    }
+
+    } catch (error) {
+      console.error(error);
+      setIsLoading(false);
+      toast.error("Ocurrió un error al conectarse con el servidor");
+    }
   }
 
   return (
@@ -206,6 +258,11 @@ export default function Signup() {
           className="object-cover rounded-lg"
         />
       </div>
+      {isLoading && (
+        <div className="fixed inset-0  bg-black/40 flex items-center justify-center z-50">
+          <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
     </div>
   );
 }

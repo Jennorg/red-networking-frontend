@@ -6,15 +6,14 @@ import Login from "./Login/page";
 export default function Home() {
   return (
     <>
-      <Login />
-      {/* <div className="flex flex-col min-h-screen">
+      <div className="flex flex-col min-h-screen">
       <Header />
       <div className="flex flex-1 overflow-hidden">
         <Aside />
         <Main />
       </div>
     </div>
-    */}
+   
     </>
   );
 }
