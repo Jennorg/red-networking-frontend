@@ -3,9 +3,12 @@
 import React from "react";
 import Logo from './Logo';
 import SearchBar from "./SearchBar";
+import Navigation from "./Navigation";
+import MobileNavigation from "./MobileNavigation";
 import Notifications from "./Notifications";
 import AddProjectButton from "./AddProjectButton";
 import PerfilBubble from "@/components/common/PerfilBubble";
+import { useAuth } from "@/hooks/useAuth";
 
 import {
   NavigationMenu,
@@ -18,32 +21,60 @@ import {
 
 
 const Header = () => {
+  const { shouldShowNavigation, isLoading } = useAuth();
+
+  // Si está cargando, mostrar un header básico
+  if (isLoading) {
+    return (
+      <header className="flex p-2 bg-gray-800 w-full items-center border-b border-gray-600">
+        <div className="flex items-center gap-4">
+          <Logo />
+        </div>
+      </header>
+    );
+  }
+
   return (
     <header className="flex p-2 bg-gray-800 w-full items-center border-b border-gray-600">      
       <div className="flex items-center gap-4">
         <Logo />
-        <SearchBar />
+        {shouldShowNavigation && <SearchBar />}
       </div>
-      <div className="flex items-center gap-4 ml-auto">
-       
-        <Notifications />
+      
+      {/* Navegación principal - visible en desktop */}
+      {shouldShowNavigation && (
+        <div className="flex-1 flex justify-center">
+          <Navigation />
+        </div>
+      )}
+      
+      <div className="flex items-center gap-4">
+        {/* Navegación móvil */}
+        {shouldShowNavigation && <MobileNavigation />}
+        
+        {shouldShowNavigation && (
+          <>
+            <Notifications />
+            <AddProjectButton />
+          </>
+        )}
 
-        <AddProjectButton />
-
-      <NavigationMenu>
-        <NavigationMenuList>
-          <NavigationMenuItem>
-            <NavigationMenuTrigger className="!bg-gray-800 hover:!bg-gray-700 active:!bg-gray-700 focus:!bg-gray-700 text-white">
-              <PerfilBubble />
-            </NavigationMenuTrigger>
-            <NavigationMenuContent className="!bg-gray-700 shadow rounded text-white border-0">
-              <NavigationMenuLink asChild className="hover:!bg-gray-700 active:!bg-gray-700 focus:!bg-gray-700 hover:text-white">
-                <a className="block px-4 py-2 hover:text-white">Perfil</a>
-              </NavigationMenuLink>
-            </NavigationMenuContent>
-          </NavigationMenuItem>
-        </NavigationMenuList>
-      </NavigationMenu>
+        {shouldShowNavigation && (
+          <NavigationMenu>
+            <NavigationMenuList>
+              <NavigationMenuItem>
+                <NavigationMenuTrigger className="!bg-gray-800 hover:!bg-gray-700 active:!bg-gray-700 focus:!bg-gray-700 text-white">
+                  <PerfilBubble />
+                </NavigationMenuTrigger>
+                <NavigationMenuContent className="!bg-gray-700 shadow rounded text-white border-0">
+                  <NavigationMenuLink asChild className="hover:!bg-gray-700 active:!bg-gray-700 focus:!bg-gray-700 hover:text-white">
+                    <a className="block px-4 py-2 hover:text-white">Perfil</a>
+                  </NavigationMenuLink>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+            </NavigationMenuList>
+          </NavigationMenu>
+        )}
       </div>
     </header>
   );
