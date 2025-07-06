@@ -3,6 +3,7 @@
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import axios from "axios";
 import { TAG_OPTIONS, TOOL_OPTIONS } from "@/components/form/project-options";
 import {
   Form,
@@ -29,15 +30,13 @@ import {
   Calendar as CalendarIcon,
 } from "lucide-react";
 import { MultiSelect } from "@/components/ui/multiselect"; 
+import { useEffect, useState } from "react";
 
 const projectUploadSchema = z.object({
   title: z.string().min(2, { message: "El título es obligatorio" }),
   authors: z
-    .string()
-    .min(1, { message: "Debes ingresar al menos un autor" })
-    .refine((val) => val.split(",").filter((a) => a.trim() !== "").length > 0, {
-      message: "Ingresa al menos un autor válido",
-    }),
+    .array(z.string().length(24), { message: "Selecciona al menos un autor" })
+    .min(1),
   date: z.date({ required_error: "La fecha es obligatoria" }),
   tags: z
     .array(z.string())
@@ -62,11 +61,27 @@ function fileToBase64(file: File): Promise<string> {
 }
 
 export default function ProjectUploadForm() {
+
+  const [usuarios, setUsuarios] = useState<{ id: string; nombre: string }[]>([]); //-- NUEVO: estado para usuarios
+
+  useEffect(() => {
+    axios
+      .get("https://red-networking-backend.vercel.app/auth/users")
+      .then((res) => {
+        const lista = res.data.users.map((u: any) => ({
+          id: u._id,
+          nombre: u.name,
+        }));
+        setUsuarios(lista);
+      })
+      .catch((err) => console.error("Error cargando usuarios:", err));
+  }, []);
+
   const form = useForm<ProjectUploadValues>({
     resolver: zodResolver(projectUploadSchema),
     defaultValues: {
       title: "",
-      authors: "",
+      authors: [],
       date: undefined,
       tags: [],
       description: "",
@@ -83,30 +98,30 @@ async function onSubmit(values: ProjectUploadValues) {
       const documentBase64 = values.document ? await fileToBase64(values.document) : null;
 
       const payload = {
-        ...values,
-        authors: values.authors.split(",").map((a) => a.trim()), 
+        ...values, 
         date: values.date.toISOString(), 
         image: imageBase64,
         document: documentBase64,
       };
 
-     // const res = await axios.post("/api/subida_proyecto", payload); // 
-      //console.log("Proyecto creado:", res.data);
+     const res = await axios.post("https://red-networking-backend.vercel.app/api/subida_proyecto", payload); // 
+     console.log("Proyecto creado:", res.data);
 
       console.log("--- Prueba de Payload del Formulario ---");
-    console.log("Valores originales del formulario:", values);
-    console.log("Payload Final a enviar:", payload);
-    console.log("---------------------------------------");
+      console.log("Valores originales del formulario:", values);
+      console.log("Payload Final a enviar:", payload);
+      console.log("---------------------------------------");
 
     alert("Formulario procesado localmente. Revisa la consola para el payload.");
-    
+    form.reset();
   } catch (error: any) {
       console.error("Error al enviar:", error?.response?.data || error.message);
+       alert("Error enviando proyecto.");
     }
   }
 
   return (
-    <div className="flex flex-col items-center w-full mx-5 mb-5 p-8">
+    <div className="flex flex-col items-center w-full mx-5 mb-5 p-8 bg-gray-900">
       <h2 className="text-3xl font-bold text-white mb-8 mt-8 text-center">
         Formulario Nuevo Proyecto
       </h2>
@@ -147,11 +162,12 @@ async function onSubmit(values: ProjectUploadValues) {
                     Autores del Proyecto
                   </FormLabel>
                   <FormControl>
-                    <Input
-                      className="bg-white text-black"
-                      placeholder="Ej: Maria Fernandez, Juan Pérez"
-                      {...field}
-                    />
+                    <MultiSelect
+                    options={usuarios.map((u) => ({ label: u.nombre, value: u.id }))}
+                    value={field.value ?? []}
+                    onChange={field.onChange}
+                    placeholder="Selecciona autores"
+                  />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
