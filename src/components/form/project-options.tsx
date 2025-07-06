@@ -1,4 +1,3 @@
-// components/forms/project-options.ts
 export const TAG_OPTIONS = [
   { label: "Inteligencia Artificial", value: "ia" },
   { label: "Web", value: "web" },

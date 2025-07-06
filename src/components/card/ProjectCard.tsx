@@ -5,85 +5,107 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Eye, Star, MessageCircleMore, Heart } from "lucide-react";
 import { LanguageIcon } from "../misc/LanguageIcon";
 
-interface ProjectCardProps {
+// Interfaz que representa la estructura de la respuesta de la API para un proyecto.
+export interface ProjectApiResponse {
+  _id: string;
+  title: string;
+  authors: string[];
+  date: string;
+  tags: string[];
+  description: string;
+  repositoryLink: string;
+  tools: string[]; // Aseguramos que 'tools' es un array de strings
+  image: string;
+  document: string;
+  __v: number;
+}
+
+// Interfaz para las props del componente ProjectCard,
+// extendiendo la interfaz de la API y añadiendo props específicas del componente.
+export interface ProjectCardProps extends ProjectApiResponse {
   position?: number;
-  name: string;
-  username: string;
-  projectDescription: string;
   stars?: number;
-  avatarURL: string;
   views?: number;
   showComments?: boolean;
+  avatarURL?: string;
 }
 
 export function ProjectCard({
-  views,
+  _id,
+  title,
+  authors = ["Desconocido"],
+  date,
+  tags,
+  description,
+  repositoryLink,
+  tools = [],
+  image,
+  document,
+  __v,
   position,
-  name,
-  username,
-  projectDescription,
-  stars,
-  avatarURL = "avatar.png",
-  showComments
+  stars = 0,
+  views = 0,
+  showComments = false,
+  avatarURL = "/pngs/avatar.png",
 }: ProjectCardProps) {
+  const username = authors.length > 0 ? authors[0] : "Desconocido";
+
   return (
-    <div>
+    <div className="my-4">
       <Card className="flex flex-col bg-gray-800 text-white border-b-2 border-gray-700 rounded-b-sm">
         <CardHeader>
           <CardTitle className="flex flex-col lg:flex-row items-center gap-2 lg:justify-between">
-            {/* ESTE ES EL NUEVO CONTENEDOR FLEX PARA EL GRUPO DE LA IZQUIERDA */}
             <div className="flex items-center gap-2">
-              {" "}
-              {/* Puedes ajustar 'gap-2' aquí */}
               {position && (
                 <span className="text-blue-400 font-bold text-2xl">
                   #{position}
                 </span>
               )}
               <Avatar className="w-8 h-8">
-                <AvatarImage src={avatarURL} alt={`Avatar de ${username}`} />
-                <AvatarFallback>CN</AvatarFallback>
-              </Avatar>
-              {/* Este div ya es parte del grupo de la izquierda */}
+                  <AvatarImage src={avatarURL} alt={`Avatar de ${username}`} />
+                  <AvatarFallback>
+                    {username ? username.substring(0, 2).toUpperCase() : "CN"}
+                  </AvatarFallback>
+                </Avatar>
               <div className="flex-col">
-                <h1 className="text-blue-400">{name}</h1>
+                <h1 className="text-blue-400">{title}</h1>
                 <h2 className="text-gray-400 font-light">
                   @{username} · {stars} Estrellas
                 </h2>
               </div>
             </div>
 
-            {/* ESTE ES EL CONTENEDOR DE ESTRELLAS/VISTAS (el grupo de la derecha) */}
             <div className="flex gap-2">
-              {/* Quitamos ml-auto aquí */}
               <Star className="size-5 text-gray-300 hover:text-yellow-400" />
               <p className="font-light"> {stars}</p>
-              {views && 
+              {views > 0 && (
                 <>
                   <Eye className="size-5 text-gray-300 hover:text-blue-400" />
                   <p className="font-light"> {views}</p>
                 </>
-              }
+              )}
             </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             <p className="text-white font-light text-xs sm:text-sm sm:font-medium">
-              {projectDescription}
+              {description}
             </p>
-            {/* Contenedor principal */}
             <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-3">
-              {/* Iconos (siempre a la izquierda) */}
               <div className="flex flex-row gap-4">
-                <LanguageIcon languageName="python" languageIcon="python.png" />
-                <LanguageIcon languageName="javascript" languageIcon="js.png" />
+                {tools.map((tool) => (
+                  <LanguageIcon
+                    key={tool}
+                    languageName={tool}
+                    languageIcon={`${tool.toLowerCase()}.png`}
+                  />
+                ))}
               </div>
 
-              {/* Botón (debajo en móvil, a la derecha en desktop) */}
               <Button
                 className="border-blue-400 text-blue-400 font-light hover:bg-blue-400/10 w-full sm:w-auto"
-                onClick={() => alert("Ver detalles")}
+                onClick={() => window.open(repositoryLink, "_blank")}
               >
                 Ver detalles
               </Button>
@@ -91,16 +113,14 @@ export function ProjectCard({
           </div>
         </CardContent>
       </Card>
-      {showComments && 
+      {showComments && (
         <div className="p-5 bg-gray-900 rounded-b-sm border-b-2 border-x-2 border-x-gray-700 border-b-gray-700">
           <h2 className="text-blue-400 m-3 text-2xl">Comentarios</h2>
           <Card className="bg-gray-800 border border-gray-700">
             <CardHeader>
               <CardTitle className="flex flex-col lg:flex-row items-center gap-2 lg:justify-between">
-                {/* ESTE ES EL NUEVO CONTENEDOR FLEX PARA EL GRUPO DE LA IZQUIERDA */}
                 <div className="flex items-center gap-2">
                   {" "}
-                  {/* Puedes ajustar 'gap-2' aquí */}
                   {position && (
                     <span className="text-blue-400 font-bold text-2xl">
                       #{position}
@@ -108,36 +128,41 @@ export function ProjectCard({
                   )}
                   <Avatar className="w-8 h-8">
                     <AvatarImage src={avatarURL} alt={`Avatar de ${username}`} />
-                    <AvatarFallback>CN</AvatarFallback>
+                    <AvatarFallback>
+                      {username ? username.substring(0, 2).toUpperCase() : "CN"}
+                    </AvatarFallback>
                   </Avatar>
-                  {/* Este div ya es parte del grupo de la izquierda */}
                   <div className="flex-col">
-                    <h1 className="text-blue-400">{name}</h1>
+                    <h1 className="text-blue-400">{title}</h1>
                     <h2 className="text-gray-400 font-light">
                       @{username} · {stars} Estrellas
                     </h2>
                   </div>
-                </div>                
+                </div>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3 flex flex-col">
-                <p className="text-white font-light">Lorem ipsum dolor sit amet consectetur adipisicing elit. Saepe ad recusandae labore, aspernatur facere, molestiae voluptates debitis fugiat necessitatibus impedit praesentium cum repellendus dolor nobis aliquid officiis aut quis! Adipisci!</p>
-                {/* ESTE ES EL CONTENEDOR FLEX DE LOS BOTOENES DE INTERACCION USUARIO */}
+                <p className="text-white font-light">
+                  Lorem ipsum dolor sit amet consectetur adipisicing elit. Saepe
+                  ad recusandae labore, aspernatur facere, molestiae voluptates
+                  debitis fugiat necessitatibus impedit praesentium cum
+                  repellendus dolor nobis aliquid officiis aut quis! Adipisci!
+                </p>
                 <div className="flex gap-3">
                   <button>
-                    <Heart className="hover:text-red-700 text-gray-400"/>
+                    <Heart className="hover:text-red-700 text-gray-400" />
                   </button>
                   <button className="flex items-center gap-1 text-gray-400 hover:text-blue-500 hover:fill-blue-500">
-                    <MessageCircleMore  /> 
+                    <MessageCircleMore />
                     <p className="">Responder</p>
                   </button>
                 </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    }
-  </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </div>
   );
 }
