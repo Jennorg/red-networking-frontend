@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Eye, Star, MessageCircleMore, Heart } from "lucide-react";
 import { LanguageIcon } from "../misc/LanguageIcon";
+import { useRouter } from "next/navigation";
 
 // Interfaz que representa la estructura de la respuesta de la API para un proyecto.
 export interface ProjectApiResponse {
@@ -43,6 +44,7 @@ export function ProjectCard({
   avatarURL = "/pngs/avatar.png",
 }: ProjectCardProps) {
   const username = authors.length > 0 ? authors[0] : "Desconocido";
+  const router = useRouter();
 
   return (
     <div className="my-4">
@@ -99,7 +101,7 @@ export function ProjectCard({
 
               <Button
                 className="border-blue-400 text-blue-400 font-light hover:bg-blue-400/10 w-full sm:w-auto"
-                onClick={() => window.open(repositoryLink, "_blank")}
+                onClick={() => router.push(`/Proyecto/${_id}`)}
               >
                 Ver detalles
               </Button>

@@ -24,9 +24,6 @@ import { CalendarIcon, EyeIcon, EyeOffIcon } from "lucide-react";
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import axios from "axios";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 
 const today = new Date();
 const maxAllowedDate = new Date(
@@ -53,8 +50,6 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export default function Signup() {
-  const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -66,55 +61,8 @@ export default function Signup() {
     },
   });
 
-
-  async function onSubmit(values: FormValues) {
-    const { name, email, password, birthdate } = values;
-
-    try {
-      setIsLoading(true);
-      const registro = await axios.post(
-        "https://red-networking-backend.vercel.app/auth/register",
-        {
-          name,
-          email,
-          password,
-          born: birthdate.toISOString().split("T")[0],
-        }
-      );
-      setIsLoading(false);
-
-      if (!registro.data.proceso) {
-      toast.error(registro.data.message || "Error al registrarse");
-      return;
-     }
-
-      toast.success("Registro exitoso.");
-
-      const login = await axios.post("https://red-networking-backend.vercel.app/auth/login", {
-        email,
-        password,
-      });
-
-      if (login.data.proceso) {
-      const token = login.data.token;
-      localStorage.setItem("token", token);
-
-      setTimeout(() => {
-        toast.info("Inicio de sesión automático. Redirigiendo...");
-
-        setTimeout(() => {
-          router.push("/");
-        }, 1500);
-      }, 1000);
-    } else {
-      toast.error(login.data.message || "No se pudo iniciar sesión");
-    }
-
-    } catch (error) {
-      console.error(error);
-      setIsLoading(false);
-      toast.error("Ocurrió un error al conectarse con el servidor");
-    }
+  function onSubmit(values: FormValues) {
+    console.log(values);
   }
 
   return (
@@ -242,6 +190,16 @@ export default function Signup() {
             </Button>
           </form>
         </Form>
+        {/* <div className="flex items-center justify-center my-4 w-full max-w-sm">
+          <span className="mx-2 text-white">o</span>
+        </div>
+        <Button
+          variant="outline"
+          className="w-full max-w-sm flex items-center justify-center gap-2 hover:bg-gray-300"
+        >
+          Regístrate con Google
+          <Image src="/icons/google.svg" alt="Google" width={15} height={15} />
+        </Button> */}
 
         <p className="text-sm text-white mt-4">
           Ya tienes una cuenta?{" "}
@@ -258,11 +216,6 @@ export default function Signup() {
           className="object-cover rounded-lg"
         />
       </div>
-      {isLoading && (
-        <div className="fixed inset-0  bg-black/40 flex items-center justify-center z-50">
-          <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin" />
-        </div>
-      )}
     </div>
   );
 }
