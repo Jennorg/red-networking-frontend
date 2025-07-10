@@ -61,14 +61,61 @@ export default function Signup() {
     },
   });
 
-  function onSubmit(values: FormValues) {
-    console.log(values);
+
+  async function onSubmit(values: FormValues) {
+    const { name, email, password, birthdate } = values;
+
+    try {
+      setIsLoading(true);
+      const registro = await axios.post(
+        "https://red-networking-backend.vercel.app/auth/register",
+        {
+          name,
+          email,
+          password,
+          born: birthdate.toISOString().split("T")[0],
+        }
+      );
+      setIsLoading(false);
+
+      if (!registro.data.proceso) {
+      toast.error(registro.data.message || "Error al registrarse");
+      return;
+     }
+
+      toast.success("Registro exitoso.");
+
+      const login = await axios.post("https://red-networking-backend.vercel.app/auth/login", {
+        email,
+        password,
+      });
+
+      if (login.data.proceso) {
+      const token = login.data.token;
+      localStorage.setItem("token", token);
+
+      setTimeout(() => {
+        toast.info("Inicio de sesión automático. Redirigiendo...");
+
+        setTimeout(() => {
+          router.push("/");
+        }, 1500);
+      }, 1500);
+    } else {
+      toast.error(login.data.message || "No se pudo iniciar sesión");
+    }
+
+    } catch (error) {
+      console.error(error);
+      setIsLoading(false);
+      toast.error("Ocurrió un error al conectarse con el servidor");
+    }
   }
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-[#161B22]">
-      <div className="flex-[3] flex flex-col justify-center items-center px-8 py-10 mx-6">
-        <Image src="/pngs/uneg.png" alt="UNEG" width={80} height={80} />
+      <div className="flex-[3] flex flex-col justify-center items-center px-8 py-6 mx-6">
+        <Image src="/uneg-logo.png" alt="UNEG" width={80} height={80} />
         <h1 className="text-3xl font-bold mt-5 text-white">Registro</h1>
         <p className="text-sm text-white mt-2">
           Regístrate y disfruta de un mundo de posibilidades
