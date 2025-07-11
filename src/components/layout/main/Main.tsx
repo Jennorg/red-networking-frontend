@@ -34,6 +34,7 @@ const Main = () => {
       
       const response = await axios.get(fullUrl);
       const apiResponse: PaginationData = response.data.data;
+      console.log(apiResponse)
 
       console.log(`Main: API response received, setting data`);
       setProjects(apiResponse.data);

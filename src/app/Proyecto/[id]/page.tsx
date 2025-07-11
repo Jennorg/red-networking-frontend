@@ -31,25 +31,11 @@ async function getProyecto(id: string): Promise<Proyecto | null> {
 export default async function ProyectoPage({ params }: { params: { id: string } }) {
   let proyecto = await getProyecto(params.id);
   if (!proyecto) {
-    // MOCKUP de proyecto si no se encuentra uno real
-    proyecto = {
-      _id: "mockid123",
-      title: "SeaFood Manager Pro",
-      description: "Plataforma integral para la gestión de productos del mar (especialmente camarones), con: Inventario en tiempo real (lotes, caducidad, ubicación). Módulo de ventas integrado con facturación electrónica. Seguimiento de calidad: Sensores de temperatura/humedad y alertas. Dashboard interactivo con gráficos de ventas y estado de productos.",
-      authors: ["Edward Guzman", "Maria López"],
-      tags: ["inventario", "ventas", "React", "Node.js"],
-      tools: ["React", "Chart.js", "Bootstrap", "PDFKit", "Node.js", "Express.js", "MongoDB", "Arduino", "Balanzas Inteligentes"],
-      repositoryLink: "https://github.com/usuario/proyecto",
-      image: "https://bing.com/th/id/BCO.1e45fad0-c0dd-45fd-b03d-40966fa87d05.png",
-      document: "#",
-      puntuacion: [4, 5, 3],
-      comments: ["Excelente trabajo! Me gustaría contribuir con algunas mejoras en la documentación.", "He encontrado un bug en la funcionalidad de autenticación. ¿Podrías revisar el issue #123?"],
-      date: "2025-05-26T00:00:00.000Z",
-    };
+    return notFound();
   }
 
   const avgScore =
-    proyecto.puntuacion.length > 0
+    proyecto.puntuacion && proyecto.puntuacion.length > 0
       ? (
           proyecto.puntuacion.reduce((a, b) => a + b, 0) / proyecto.puntuacion.length
         ).toFixed(1)
@@ -69,11 +55,15 @@ export default async function ProyectoPage({ params }: { params: { id: string } 
               <span className="text-lg font-semibold text-white">Autores:</span>
             </div>
             <ul className="flex flex-col gap-1 ml-2">
-              {proyecto.authors.map((author, idx) => (
-                <li key={idx} className="flex items-center gap-2">
-                  <span className="bg-blue-900 text-blue-300 px-2 py-1 rounded-full text-xs">{author}</span>
-                </li>
-              ))}
+              {proyecto.authors && proyecto.authors.length > 0 ? (
+                proyecto.authors.map((author, idx) => (
+                  <li key={idx} className="flex items-center gap-2">
+                    <span className="bg-blue-900 text-blue-300 px-2 py-1 rounded-full text-xs">{author}</span>
+                  </li>
+                ))
+              ) : (
+                <li className="text-gray-400 text-sm">Sin autores especificados</li>
+              )}
             </ul>
           </div>
           <div className="bg-[#181b22] rounded-lg p-4 flex flex-col gap-2 border border-gray-700 text-gray-200">
@@ -82,9 +72,13 @@ export default async function ProyectoPage({ params }: { params: { id: string } 
             </div>
             <span className="text-gray-300 text-sm">{new Date(proyecto.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
             <div className="flex flex-wrap gap-2 mt-2">
-              {proyecto.tags.map((tag) => (
-                <span key={tag} className="bg-gray-800 text-gray-300 px-2 py-1 rounded text-xs">{tag}</span>
-              ))}
+              {proyecto.tags && proyecto.tags.length > 0 ? (
+                proyecto.tags.map((tag) => (
+                  <span key={tag} className="bg-gray-800 text-gray-300 px-2 py-1 rounded text-xs">{tag}</span>
+                ))
+              ) : (
+                <span className="text-gray-400 text-sm">Sin etiquetas</span>
+              )}
             </div>
           </div>
         </div>
@@ -98,25 +92,37 @@ export default async function ProyectoPage({ params }: { params: { id: string } 
           <div className="bg-[#181b22] rounded-lg p-4 border border-gray-700 flex flex-col gap-2 text-gray-200">
             <span className="font-semibold text-white">Frontend:</span>
             <ul className="list-disc list-inside text-gray-300 text-sm">
-              {proyecto.tools.filter(t => ["React", "Chart.js", "Bootstrap", "PDFKit"].includes(t)).map(tool => (
-                <li key={tool}>{tool}</li>
-              ))}
+              {proyecto.tools && proyecto.tools.filter(t => ["React", "Chart.js", "Bootstrap", "PDFKit"].includes(t)).length > 0 ? (
+                proyecto.tools.filter(t => ["React", "Chart.js", "Bootstrap", "PDFKit"].includes(t)).map(tool => (
+                  <li key={tool}>{tool}</li>
+                ))
+              ) : (
+                <li className="text-gray-400 text-sm">Sin herramientas frontend</li>
+              )}
             </ul>
           </div>
           <div className="bg-[#181b22] rounded-lg p-4 border border-gray-700 flex flex-col gap-2 text-gray-200">
             <span className="font-semibold text-white">Backend:</span>
             <ul className="list-disc list-inside text-gray-300 text-sm">
-              {proyecto.tools.filter(t => ["Node.js", "Express.js", "MongoDB"].includes(t)).map(tool => (
-                <li key={tool}>{tool}</li>
-              ))}
+              {proyecto.tools && proyecto.tools.filter(t => ["Node.js", "Express.js", "MongoDB"].includes(t)).length > 0 ? (
+                proyecto.tools.filter(t => ["Node.js", "Express.js", "MongoDB"].includes(t)).map(tool => (
+                  <li key={tool}>{tool}</li>
+                ))
+              ) : (
+                <li className="text-gray-400 text-sm">Sin herramientas backend</li>
+              )}
             </ul>
           </div>
           <div className="bg-[#181b22] rounded-lg p-4 border border-gray-700 flex flex-col gap-2 text-gray-200">
             <span className="font-semibold text-white">Hardware / Sensores:</span>
             <ul className="list-disc list-inside text-gray-300 text-sm">
-              {proyecto.tools.filter(t => ["Arduino", "Balanzas Inteligentes"].includes(t)).map(tool => (
-                <li key={tool}>{tool}</li>
-              ))}
+              {proyecto.tools && proyecto.tools.filter(t => ["Arduino", "Balanzas Inteligentes"].includes(t)).length > 0 ? (
+                proyecto.tools.filter(t => ["Arduino", "Balanzas Inteligentes"].includes(t)).map(tool => (
+                  <li key={tool}>{tool}</li>
+                ))
+              ) : (
+                <li className="text-gray-400 text-sm">Sin hardware/sensores</li>
+              )}
             </ul>
           </div>
         </div>
@@ -146,14 +152,15 @@ export default async function ProyectoPage({ params }: { params: { id: string } 
         <div className="bg-[#181b22] rounded-lg p-4 border border-gray-700 mt-6 text-gray-200">
           <h3 className="font-semibold text-lg mb-2 text-white">Comentarios</h3>
           <ul className="space-y-2">
-            {proyecto.comments.length === 0 && (
+            {!proyecto.comments || proyecto.comments.length === 0 ? (
               <li className="text-gray-400 text-sm">Sin comentarios.</li>
+            ) : (
+              proyecto.comments.map((comment, idx) => (
+                <li key={idx} className="bg-gray-800 rounded p-3 text-sm text-gray-200 border border-gray-700">
+                  {comment}
+                </li>
+              ))
             )}
-            {proyecto.comments.map((comment, idx) => (
-              <li key={idx} className="bg-gray-800 rounded p-3 text-sm text-gray-200 border border-gray-700">
-                {comment}
-              </li>
-            ))}
           </ul>
         </div>
       </div>
