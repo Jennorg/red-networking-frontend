@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { Loader2, ChevronDown } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 
 const formSchema = z.object({
@@ -68,9 +68,12 @@ export default function RoleChangeForm({ onClose }: Props) {
       } else {
         toast.error(res.data.error || "No se pudo cambiar el rol.");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setIsLoading(false);
-      toast.error(err.response?.data?.error || "Error en la solicitud.");
+      const errorMessage = err instanceof Error && 'response' in err 
+        ? (err as { response?: { data?: { error?: string } } }).response?.data?.error || "Error en la solicitud."
+        : "Error en la solicitud.";
+      toast.error(errorMessage);
     }
   }
 

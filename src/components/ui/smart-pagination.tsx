@@ -83,7 +83,7 @@ export function SmartPagination({
     const halfVisible = Math.floor(maxVisiblePages / 2);
     
     let start = Math.max(1, currentPage - halfVisible);
-    let end = Math.min(totalPages, start + maxVisiblePages - 1);
+    const end = Math.min(totalPages, start + maxVisiblePages - 1);
     
     // Adjust start if we're near the end
     if (end - start < maxVisiblePages - 1) {

@@ -2,6 +2,7 @@
 import { notFound } from 'next/navigation';
 import axios from "axios";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import Image from "next/image";
 
 interface Proyecto {
   _id: string;
@@ -28,8 +29,9 @@ async function getProyecto(id: string): Promise<Proyecto | null> {
   }
 }
 
-export default async function ProyectoPage({ params }: { params: { id: string } }) {
-  let proyecto = await getProyecto(params.id);
+export default async function ProyectoPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const proyecto = await getProyecto(id);
   if (!proyecto) {
     return notFound();
   }
@@ -145,7 +147,13 @@ export default async function ProyectoPage({ params }: { params: { id: string } 
         <div className="mb-6">
           <h3 className="font-semibold text-lg mb-2 text-white">Imágenes del Sistema</h3>
           <div className="flex flex-col items-center">
-            <img src={proyecto.image} alt="Imagen del sistema" className="rounded-lg w-full max-w-2xl border border-gray-700" />
+            <Image 
+              src={proyecto.image} 
+              alt="Imagen del sistema" 
+              width={800}
+              height={600}
+              className="rounded-lg w-full max-w-2xl border border-gray-700" 
+            />
           </div>
         </div>
         {/* Comentarios */}

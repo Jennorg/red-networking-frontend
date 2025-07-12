@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 // Esquema de validación con Zod
 const loginSchema = z.object({
@@ -99,9 +100,11 @@ export default function Login() {
     <div className="bg-gray-900 text-gray-100 min-h-screen w-full lg:h-screen flex flex-col lg:flex-row">
       <div className="flex flex-col items-center justify-center min-h-screen p-8 w-full lg:w-1/2">
         <div className="w-full max-w-md">
-          <img
+          <Image
             src="/pngs/uneg-logo.png"
             alt="Logo UNEG"
+            width={112}
+            height={112}
             className="w-28 mx-auto mb-8"
           />
           <h1 className="text-4xl font-bold text-center mb-2">
@@ -192,9 +195,11 @@ export default function Login() {
         </div>
       </div>
       <div className="hidden lg:block lg:w-1/2 p-2">
-        <img
+        <Image
           src="/pngs/image_signup.png"
           alt="Container"
+          width={800}
+          height={600}
           className="w-full h-full object-cover rounded-2xl shadow-lg"
         />
       </div>

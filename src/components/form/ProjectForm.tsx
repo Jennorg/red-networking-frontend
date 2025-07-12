@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import axios from "axios";
@@ -74,7 +74,7 @@ export default function ProjectUploadForm() {
     axios
       .get("https://red-networking-backend.vercel.app/auth/users")
       .then((res) => {
-        const lista = res.data.users.map((u: any) => ({
+        const lista = res.data.users.map((u: { _id: string; name: string }) => ({
           id: u._id,
           nombre: u.name,
         }));
@@ -128,8 +128,9 @@ async function onSubmit(values: ProjectUploadValues) {
 
     toast.success("Proyecto subido correctamente");
     form.reset();
-  } catch (error: any) {
-      console.error("Error al enviar:", error?.response?.data || error.message);
+  } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      console.error("Error al enviar:", errorMessage);
        toast.error("Error enviando proyecto, intenta nuevamente");
   } finally {
     setIsLoading(false); // Desactivar loader siempre

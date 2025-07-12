@@ -4,7 +4,7 @@ import axios, { AxiosRequestConfig } from "axios";
 export function useAuthenticatedRequest() {
   const { token } = useAuth();
 
-  const authenticatedRequest = async <T = any>(
+  const authenticatedRequest = async <T = unknown>(
     config: AxiosRequestConfig
   ): Promise<T> => {
     if (!token) {
@@ -22,16 +22,16 @@ export function useAuthenticatedRequest() {
     return response.data;
   };
 
-  const get = <T = any>(url: string, config?: AxiosRequestConfig) =>
+  const get = <T = unknown>(url: string, config?: AxiosRequestConfig) =>
     authenticatedRequest<T>({ ...config, method: "GET", url });
 
-  const post = <T = any>(url: string, data?: any, config?: AxiosRequestConfig) =>
+  const post = <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig) =>
     authenticatedRequest<T>({ ...config, method: "POST", url, data });
 
-  const put = <T = any>(url: string, data?: any, config?: AxiosRequestConfig) =>
+  const put = <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig) =>
     authenticatedRequest<T>({ ...config, method: "PUT", url, data });
 
-  const del = <T = any>(url: string, config?: AxiosRequestConfig) =>
+  const del = <T = unknown>(url: string, config?: AxiosRequestConfig) =>
     authenticatedRequest<T>({ ...config, method: "DELETE", url });
 
   return {

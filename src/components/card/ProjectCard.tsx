@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Eye, Star, MessageCircleMore, Heart, Loader2 } from "lucide-react";
 import { LanguageIcon } from "../misc/LanguageIcon";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 
 // Interfaz que representa la estructura de la respuesta de la API para un proyecto.
@@ -13,14 +13,14 @@ export interface ProjectApiResponse {
   _id: string;
   title: string;
   authors: string[];
-  date: string;
-  tags: string[];
+  // date: string; // Not used in this component
+  // tags: string[]; // Not used in this component
   description: string;
-  repositoryLink: string;
+  // repositoryLink: string; // Not used in this component
   tools: string[]; // Aseguramos que 'tools' es un array de strings
-  image: string;
-  document: string;
-  __v: number;
+  // image: string; // Not used in this component
+  // document: string; // Not used in this component
+  // __v: number; // Not used in this component
 }
 
 // Interfaz para los comentarios
@@ -49,14 +49,14 @@ export function ProjectCard({
   _id,
   title,
   authors = ["Desconocido"],
-  date,
-  tags,
+  // date, // Not used
+  // tags, // Not used
   description,
-  repositoryLink,
+  // repositoryLink, // Not used
   tools = [],
-  image,
-  document,
-  __v,
+  // image, // Not used
+  // document, // Not used
+  // __v, // Not used
   position,
   stars = 0,
   views = 0,
@@ -71,7 +71,7 @@ export function ProjectCard({
   const [commentsError, setCommentsError] = useState<string | null>(null);
   const [hasLoadedComments, setHasLoadedComments] = useState(false);
 
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     if (!showComments || hasLoadedComments) return; // No cargar si ya están cargados
     
     setIsLoadingComments(true);
@@ -94,7 +94,7 @@ export function ProjectCard({
     } finally {
       setIsLoadingComments(false);
     }
-  };
+  }, [showComments, hasLoadedComments, _id]);
 
   useEffect(() => {
     if (showComments) {
@@ -105,7 +105,7 @@ export function ProjectCard({
       setCommentsError(null);
       setHasLoadedComments(false);
     }
-  }, [showComments, _id]);
+  }, [showComments, _id, fetchComments]);
 
   const renderComment = (comment: Comment) => (
     <Card key={comment._id} className="bg-gray-800 border border-gray-700 mb-3">
