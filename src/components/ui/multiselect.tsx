@@ -89,7 +89,7 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
         })}
       </div>
       {open && (
-        <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded shadow-lg max-h-36 overflow-auto">
+        <div className="absolute z-10 mt-1 w-full bg-white border text-black border-gray-300 rounded shadow-lg max-h-36 overflow-auto">
           {options.map((opt) => (
             <div
               key={opt.value}
