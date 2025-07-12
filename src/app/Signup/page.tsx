@@ -22,12 +22,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { CalendarIcon, EyeIcon, EyeOffIcon, Loader2 } from "lucide-react";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 const today = new Date();
 const maxAllowedDate = new Date(
@@ -57,6 +58,14 @@ export default function Signup() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const { login, isAuthenticated } = useAuth();
+
+  // Redirigir si ya está autenticado
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/');
+    }
+  }, [isAuthenticated, router]);
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -91,14 +100,27 @@ export default function Signup() {
 
       toast.success("Registro exitoso.");
 
-      const login = await axios.post("https://red-networking-backend.vercel.app/auth/login", {
+      const loginResponse = await axios.post("https://red-networking-backend.vercel.app/auth/login", {
         email,
         password,
       });
 
-      if (login.data.proceso) {
-      const token = login.data.token;
-      localStorage.setItem("token", token);
+      if (loginResponse.data.proceso) {
+        const token = loginResponse.data.token;
+        console.log(loginResponse.data)
+        
+        // Extraer datos del usuario de la respuesta
+        const userId = loginResponse.data.token?.id || loginResponse.data.user?.id || loginResponse.data.userId || loginResponse.data.id;
+        const userData = {
+          id: userId,
+          email: email,
+          name: name
+        };
+        
+        console.log('User data extracted:', userData);
+        
+        // Usar el contexto de autenticación con datos completos del usuario
+        login(token, userData);
 
       setTimeout(() => {
         toast.info("Inicio de sesión automático. Redirigiendo...");
@@ -108,7 +130,7 @@ export default function Signup() {
         }, 1500);
       }, 1500);
     } else {
-      toast.error(login.data.message || "No se pudo iniciar sesión");
+      toast.error(loginResponse.data.message || "No se pudo iniciar sesión");
     }
 
     } catch (error) {

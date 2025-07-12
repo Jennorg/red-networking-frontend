@@ -4,9 +4,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    // URL del backend - ajusta según tu configuración
-    const backendUrl =
-      process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
+    // URL del backend - usar la URL de producción
+    const backendUrl = "https://red-networking-backend.vercel.app";
 
     const response = await fetch(`${backendUrl}/auth/login`, {
       method: "POST",

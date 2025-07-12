@@ -88,40 +88,6 @@ const Main = () => {
         />
       ))}
 
-      <ProjectCard
-        _id="static-1"
-        avatarURL="avatar.png"
-        title="Ecuanutrition"
-        authors={["EdwardG"]}
-        showComments={visibleComments.has("static-1")}
-        onToggleComments={() => toggleComments("static-1")}
-        description="Plataforma de gestión para productos del mar y camarones, con sistema de inventario y ventas."
-        repositoryLink="#"
-        date="" tags={[]} tools={[]} image="" document="" __v={0}
-      />
-      <ProjectCard
-        _id="static-2"
-        avatarURL="avatar.png"
-        title="Ecuanutrition"
-        authors={["EdwardG"]}
-        showComments={visibleComments.has("static-2")}
-        onToggleComments={() => toggleComments("static-2")}
-        description="Plataforma de gestión para productos del mar y camarones, con sistema de inventario y ventas."
-        repositoryLink="#"
-        date="" tags={[]} tools={[]} image="" document="" __v={0}
-      />
-      <ProjectCard
-        _id="static-3"
-        avatarURL="avatar.png"
-        title="Ecuanutrition"
-        authors={["EdwardG"]}
-        showComments={visibleComments.has("static-3")}
-        onToggleComments={() => toggleComments("static-3")}
-        description="Plataforma de gestión para productos del mar y camarones, con sistema de inventario y ventas."
-        repositoryLink="#"
-        date="" tags={[]} tools={[]} image="" document="" __v={0}
-      />
-
       {paginationInfo && (
         <SmartPagination
           currentPage={currentPage}

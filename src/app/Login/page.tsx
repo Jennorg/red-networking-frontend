@@ -3,8 +3,10 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 
 // Esquema de validación con Zod
 const loginSchema = z.object({
@@ -24,6 +26,15 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const { login, isAuthenticated } = useAuth();
+  const router = useRouter();
+
+  // Redirigir si ya está autenticado
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/');
+    }
+  }, [isAuthenticated, router]);
 
   const {
     register,
@@ -49,21 +60,36 @@ export default function Login() {
       });
 
       const result = await response.json();
+      console.log(result)
 
       if (result.proceso) {
         setSuccess(result.message);
-        // Guardar el token en localStorage
-        localStorage.setItem("token", result.token.token);
-        localStorage.setItem("userId", result.token.id);
+        
+        // Extraer datos del usuario de la respuesta
+        const userData = {
+          id: result.token?.id || result.user?.id || result.userId || result.id,
+          email: result.user?.email || result.email || '',
+          name: result.user?.name || result.name || ''
+        };
+        
+        console.log('User data extracted:', userData);
+        
+        // Usar el contexto de autenticación con datos completos del usuario
+        login(result.token.token, userData);
+        
         // Limpiar el formulario
         reset();
-        // Redirigir al dashboard o página principal
-        // window.location.href = '/dashboard';
+        
+        // Redirigir a la página principal después de un breve delay
+        setTimeout(() => {
+          router.push('/');
+        }, 1000);
       } else {
         setError(result.message);
       }
     } catch (err) {
       setError("Error de conexión. Inténtalo de nuevo.");
+      console.log(err)
     } finally {
       setIsLoading(false);
     }
