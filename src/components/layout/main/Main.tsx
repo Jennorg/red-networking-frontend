@@ -22,10 +22,11 @@ const Main = () => {
   const [paginationInfo, setPaginationInfo] = useState<PaginationData | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [visibleComments, setVisibleComments] = useState<Set<string>>(new Set());
 
   const fetchData = async (page: number) => {
     console.log(`Main: fetchData called with page ${page}`);
-    if (page <= 0 || !page) return; // Prevent invalid page numbers
+    if (page <= 0 || !page) return; 
     
     setIsLoading(true);
     try {
@@ -64,7 +65,17 @@ const Main = () => {
     setCurrentPage(page);
   };
 
-
+  const toggleComments = (projectId: string) => {
+    setVisibleComments(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(projectId)) {
+        newSet.delete(projectId);
+      } else {
+        newSet.add(projectId);
+      }
+      return newSet;
+    });
+  };
 
   return (
     <div className="flex flex-col gap-2 sm:gap-5 w-full bg-gray-900 p-10">
@@ -72,7 +83,8 @@ const Main = () => {
         <ProjectCard
           key={project._id}
           {...project}
-          showComments={true}
+          showComments={visibleComments.has(project._id)}
+          onToggleComments={() => toggleComments(project._id)}
         />
       ))}
 
@@ -81,7 +93,8 @@ const Main = () => {
         avatarURL="avatar.png"
         title="Ecuanutrition"
         authors={["EdwardG"]}
-        showComments={true}
+        showComments={visibleComments.has("static-1")}
+        onToggleComments={() => toggleComments("static-1")}
         description="Plataforma de gestión para productos del mar y camarones, con sistema de inventario y ventas."
         repositoryLink="#"
         date="" tags={[]} tools={[]} image="" document="" __v={0}
@@ -91,6 +104,8 @@ const Main = () => {
         avatarURL="avatar.png"
         title="Ecuanutrition"
         authors={["EdwardG"]}
+        showComments={visibleComments.has("static-2")}
+        onToggleComments={() => toggleComments("static-2")}
         description="Plataforma de gestión para productos del mar y camarones, con sistema de inventario y ventas."
         repositoryLink="#"
         date="" tags={[]} tools={[]} image="" document="" __v={0}
@@ -100,6 +115,8 @@ const Main = () => {
         avatarURL="avatar.png"
         title="Ecuanutrition"
         authors={["EdwardG"]}
+        showComments={visibleComments.has("static-3")}
+        onToggleComments={() => toggleComments("static-3")}
         description="Plataforma de gestión para productos del mar y camarones, con sistema de inventario y ventas."
         repositoryLink="#"
         date="" tags={[]} tools={[]} image="" document="" __v={0}
