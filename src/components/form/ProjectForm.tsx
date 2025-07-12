@@ -3,6 +3,7 @@
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import axios from "axios";
 import { TAG_OPTIONS, TOOL_OPTIONS } from "@/components/form/project-options";
 import {
   Form,
@@ -27,17 +28,18 @@ import {
   Image as ImageIcon,
   File as FileIcon,
   Calendar as CalendarIcon,
+  X, Loader2,
 } from "lucide-react";
 import { MultiSelect } from "@/components/ui/multiselect"; 
+import { useEffect, useState } from "react";
+import { useRef } from "react";
+import { toast } from "sonner";
 
 const projectUploadSchema = z.object({
   title: z.string().min(2, { message: "El título es obligatorio" }),
   authors: z
-    .string()
-    .min(1, { message: "Debes ingresar al menos un autor" })
-    .refine((val) => val.split(",").filter((a) => a.trim() !== "").length > 0, {
-      message: "Ingresa al menos un autor válido",
-    }),
+    .array(z.string().length(24))
+    .min(1,{ message: "Selecciona al menos un autor" }),
   date: z.date({ required_error: "La fecha es obligatoria" }),
   tags: z
     .array(z.string())
@@ -62,11 +64,30 @@ function fileToBase64(file: File): Promise<string> {
 }
 
 export default function ProjectUploadForm() {
+
+  const [usuarios, setUsuarios] = useState<{ id: string; nombre: string }[]>([]); 
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const documentInputRef = useRef<HTMLInputElement>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    axios
+      .get("https://red-networking-backend.vercel.app/auth/users")
+      .then((res) => {
+        const lista = res.data.users.map((u: any) => ({
+          id: u._id,
+          nombre: u.name,
+        }));
+        setUsuarios(lista);
+      })
+      .catch((err) => console.error("Error cargando usuarios:", err));
+  }, []);
+
   const form = useForm<ProjectUploadValues>({
     resolver: zodResolver(projectUploadSchema),
     defaultValues: {
       title: "",
-      authors: "",
+      authors: [],
       date: undefined,
       tags: [],
       description: "",
@@ -78,36 +99,51 @@ export default function ProjectUploadForm() {
   });
 
 async function onSubmit(values: ProjectUploadValues) {
+    setIsLoading(true);
     try {
+      const MAX_FILE_SIZE = 4.5 * 1024 * 1024;
+
+      if (values.image && values.image.size > MAX_FILE_SIZE) {
+        toast.error("La imagen supera el tamaño máximo permitido de 4.5MB");
+        return;
+      }
+
+      if (values.document && values.document.size > MAX_FILE_SIZE) {
+        toast.error("El documento supera el tamaño máximo permitido de 4.5MB");
+        return;
+      }
+
       const imageBase64 = values.image ? await fileToBase64(values.image) : null;
       const documentBase64 = values.document ? await fileToBase64(values.document) : null;
 
       const payload = {
-        ...values,
-        authors: values.authors.split(",").map((a) => a.trim()), 
+        ...values, 
         date: values.date.toISOString(), 
         image: imageBase64,
         document: documentBase64,
       };
 
-     // const res = await axios.post("/api/subida_proyecto", payload); // 
-      //console.log("Proyecto creado:", res.data);
+     const res = await axios.post("https://red-networking-backend.vercel.app/api/subida_proyecto", payload);  
+     console.log("Proyecto creado:", res.data);
 
-      console.log("--- Prueba de Payload del Formulario ---");
-    console.log("Valores originales del formulario:", values);
-    console.log("Payload Final a enviar:", payload);
-    console.log("---------------------------------------");
-
-    alert("Formulario procesado localmente. Revisa la consola para el payload.");
-    
+    toast.success("Proyecto subido correctamente");
+    form.reset();
   } catch (error: any) {
       console.error("Error al enviar:", error?.response?.data || error.message);
-    }
+       toast.error("Error enviando proyecto, intenta nuevamente");
+  } finally {
+    setIsLoading(false); // Desactivar loader siempre
   }
+}
 
   return (
-    <div className="flex flex-col items-center w-full mx-5 mb-5 p-8">
-      <h2 className="text-3xl font-bold text-white mb-8 mt-8 text-center">
+    <div className="flex flex-col items-center w-full p-8 bg-gray-900">
+      {isLoading && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <Loader2 className="h-12 w-12 text-white animate-spin" />
+        </div>
+      )}
+      <h2 className="text-3xl font-bold text-white mb-16 mt-5 text-center">
         Formulario Nuevo Proyecto
       </h2>
       <Form {...form}>
@@ -147,11 +183,12 @@ async function onSubmit(values: ProjectUploadValues) {
                     Autores del Proyecto
                   </FormLabel>
                   <FormControl>
-                    <Input
-                      className="bg-white text-black"
-                      placeholder="Ej: Maria Fernandez, Juan Pérez"
-                      {...field}
-                    />
+                    <MultiSelect
+                    options={usuarios.map((u) => ({ label: u.nombre, value: u.id }))}
+                    value={field.value ?? []}
+                    onChange={field.onChange}
+                    placeholder="Selecciona autores"
+                  />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -165,11 +202,11 @@ async function onSubmit(values: ProjectUploadValues) {
               render={({ field }) => (
                 <FormItem className="flex-1">
                   <FormLabel className="text-white">Fecha</FormLabel>
-                  <Popover>
+                  <Popover >
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        className="w-full justify-between font-normal bg-white flex items-center gap-2"
+                        className="w-full justify-between font-normal bg-white text-black flex items-center gap-2"
                       >
                         {field.value
                           ? format(field.value, "PPP", { locale: es })
@@ -287,20 +324,38 @@ async function onSubmit(values: ProjectUploadValues) {
                 <FormItem className="flex-1">
                   <FormLabel className="text-white">Cargar Imagen</FormLabel>
                   <FormControl>
-                    <label className="flex items-center justify-between gap-2 bg-white text-black px-3 py-2 rounded cursor-pointer border border-gray-300">
-                      <span className="text-sm ">
-                        {field.value
-                          ? field.value.name
-                          : "Selecciona una imagen"}
-                      </span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => field.onChange(e.target.files?.[0])}
-                        className="hidden"
-                      />
-                      <ImageIcon size={20} />
-                    </label>
+                    <div className="flex items-center gap-2">
+                      <label className=" flex-1 flex items-center justify-between gap-2 bg-white text-black px-3 py-2 rounded cursor-pointer border border-gray-300">
+                          <span className="text-sm truncate max-w-[250px]">
+                            {field.value?.name ?? "Selecciona una imagen"}
+                          </span>
+                          <input
+                            type="file"
+                            ref={imageInputRef}
+                            accept="image/*"
+                            onChange={(e) => field.onChange(e.target.files?.[0])}
+                            className="hidden"
+                          />
+                          <ImageIcon size={20} />
+                      </label>
+
+                      {field.value && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            field.onChange(undefined);
+                            if (imageInputRef.current) {
+                              imageInputRef.current.value = ""; 
+                            }
+                          }}
+                          className="text-red-500 hover:text-red-700"
+                          aria-label="Eliminar imagen"
+                        >
+                          <X size={18} />
+                        </button>
+                      )}
+                      </div>
+
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -313,20 +368,39 @@ async function onSubmit(values: ProjectUploadValues) {
                 <FormItem className="flex-1">
                   <FormLabel className="text-white">Cargar Documento</FormLabel>
                   <FormControl>
-                    <label className="flex items-center justify-between gap-2 bg-white text-black px-3 py-2 rounded cursor-pointer border border-gray-300">
-                      <span className="text-sm ">
-                        {field.value
-                          ? field.value.name
-                          : "Selecciona un documento"}
-                      </span>
-                      <input
-                        type="file"
-                        accept=".pdf,.doc,.docx"
-                        onChange={(e) => field.onChange(e.target.files?.[0])}
-                        className="hidden"
-                      />
-                      <FileIcon size={20} />
-                    </label>
+                    <div className="flex items-center gap-2">
+                      <label className="flex-1 flex items-center justify-between gap-2 bg-white text-black px-3 py-2 rounded cursor-pointer border border-gray-300">
+                        <span className="text-sm truncate max-w-[250px]">
+                          {field.value
+                            ? field.value.name
+                            : "Selecciona un documento"}
+                        </span>
+                        <input
+                          type="file"
+                          accept=".pdf,.doc,.docx"
+                          ref={documentInputRef}
+                          onChange={(e) => field.onChange(e.target.files?.[0])}
+                          className="hidden"
+                        />
+                        <FileIcon size={20} />
+                      </label>
+
+                      {field.value && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            field.onChange(undefined);
+                            if (documentInputRef.current) {
+                              documentInputRef.current.value = ""; 
+                            }
+                          }}
+                          className="text-red-500 hover:text-red-700"
+                          aria-label="Eliminar documento"
+                        >
+                          <X size={18} />
+                        </button>
+                      )}
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -337,9 +411,10 @@ async function onSubmit(values: ProjectUploadValues) {
           {/* Botón Enviar */}
           <Button
             type="submit"
-            className="w-full border border-white bg-black text-white hover:bg-gray-800"
+            disabled={isLoading}
+            className="w-full border border-white bg-black text-white hover:bg-gray-800 disabled:opacity-50"
           >
-            Enviar
+            {isLoading ? "Enviando..." : "Enviar"}
           </Button>
         </form>
       </Form>

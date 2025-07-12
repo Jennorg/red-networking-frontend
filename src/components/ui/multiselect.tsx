@@ -1,4 +1,4 @@
-// components/ui/multiselect.tsx
+
 "use client";
 
 import * as React from "react";
@@ -41,7 +41,7 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [wrapperRef]); // Se ejecuta solo una vez al montar y desmontar
+  }, [wrapperRef]); 
 
   const handleSelect = (val: string) => {
     if (value.includes(val)) {
@@ -89,7 +89,7 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
         })}
       </div>
       {open && (
-        <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded shadow-lg max-h-36 overflow-auto">
+        <div className="absolute z-10 mt-1 w-full bg-white border text-black border-gray-300 rounded shadow-lg max-h-36 overflow-auto">
           {options.map((opt) => (
             <div
               key={opt.value}
