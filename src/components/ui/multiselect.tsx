@@ -1,4 +1,4 @@
-// components/ui/multiselect.tsx
+
 "use client";
 
 import * as React from "react";
@@ -41,7 +41,7 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [wrapperRef]); // Se ejecuta solo una vez al montar y desmontar
+  }, [wrapperRef]); 
 
   const handleSelect = (val: string) => {
     if (value.includes(val)) {

@@ -28,7 +28,7 @@ import {
   Image as ImageIcon,
   File as FileIcon,
   Calendar as CalendarIcon,
-  X,
+  X, Loader2,
 } from "lucide-react";
 import { MultiSelect } from "@/components/ui/multiselect"; 
 import { useEffect, useState } from "react";
@@ -68,6 +68,7 @@ export default function ProjectUploadForm() {
   const [usuarios, setUsuarios] = useState<{ id: string; nombre: string }[]>([]); 
   const imageInputRef = useRef<HTMLInputElement>(null);
   const documentInputRef = useRef<HTMLInputElement>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     axios
@@ -98,6 +99,7 @@ export default function ProjectUploadForm() {
   });
 
 async function onSubmit(values: ProjectUploadValues) {
+    setIsLoading(true);
     try {
       const MAX_FILE_SIZE = 4.5 * 1024 * 1024;
 
@@ -121,7 +123,7 @@ async function onSubmit(values: ProjectUploadValues) {
         document: documentBase64,
       };
 
-     const res = await axios.post("https://red-networking-backend.vercel.app/api/subida_proyecto", payload); // 
+     const res = await axios.post("https://red-networking-backend.vercel.app/api/subida_proyecto", payload);  
      console.log("Proyecto creado:", res.data);
 
     toast.success("Proyecto subido correctamente");
@@ -129,11 +131,18 @@ async function onSubmit(values: ProjectUploadValues) {
   } catch (error: any) {
       console.error("Error al enviar:", error?.response?.data || error.message);
        toast.error("Error enviando proyecto, intenta nuevamente");
-    }
+  } finally {
+    setIsLoading(false); // Desactivar loader siempre
   }
+}
 
   return (
     <div className="flex flex-col items-center w-full p-8 bg-gray-900">
+      {isLoading && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <Loader2 className="h-12 w-12 text-white animate-spin" />
+        </div>
+      )}
       <h2 className="text-3xl font-bold text-white mb-16 mt-5 text-center">
         Formulario Nuevo Proyecto
       </h2>
@@ -336,7 +345,7 @@ async function onSubmit(values: ProjectUploadValues) {
                           onClick={() => {
                             field.onChange(undefined);
                             if (imageInputRef.current) {
-                              imageInputRef.current.value = ""; // 🔄 Reset manual
+                              imageInputRef.current.value = ""; 
                             }
                           }}
                           className="text-red-500 hover:text-red-700"
@@ -382,7 +391,7 @@ async function onSubmit(values: ProjectUploadValues) {
                           onClick={() => {
                             field.onChange(undefined);
                             if (documentInputRef.current) {
-                              documentInputRef.current.value = ""; // 🔄 Reset manual
+                              documentInputRef.current.value = ""; 
                             }
                           }}
                           className="text-red-500 hover:text-red-700"
@@ -402,9 +411,10 @@ async function onSubmit(values: ProjectUploadValues) {
           {/* Botón Enviar */}
           <Button
             type="submit"
-            className="w-full border border-white bg-black text-white hover:bg-gray-800"
+            disabled={isLoading}
+            className="w-full border border-white bg-black text-white hover:bg-gray-800 disabled:opacity-50"
           >
-            Enviar
+            {isLoading ? "Enviando..." : "Enviar"}
           </Button>
         </form>
       </Form>

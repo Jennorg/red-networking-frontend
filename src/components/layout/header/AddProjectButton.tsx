@@ -1,11 +1,10 @@
-// components/AddProjectButton.tsx
+
 "use client";
 
 import React, { useState } from "react";
 import Add from "/public/icons/add.svg";
-import ProjectUploadForm from "@/components/form/ProjectForm"; // Asegúrate que la ruta sea correcta
+import ProjectUploadForm from "@/components/form/ProjectForm";
 
-// Importa los componentes del modal
 import {
   Dialog,
   DialogTrigger,
@@ -16,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 
 const AddProjectButton = () => {
-  const [open, setOpen] = useState(false); // Estado para controlar el modal 
+  const [open, setOpen] = useState(false);  
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -30,7 +29,6 @@ const AddProjectButton = () => {
         className="sm:max-w-lg md:max-w-2xl lg:max-w-4xl xl:max-w-5xl w-[90%] max-h-[90vh] bg-gray-900 text-white p-0 overflow-hidden [&>button]:hidden"
       >
         <div className="flex flex-col h-full">
-          {/* Header con X y título */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-white">
             <DialogTitle className="text-xl">Subir nuevo proyecto</DialogTitle>
             <button
