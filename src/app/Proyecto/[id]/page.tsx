@@ -132,11 +132,19 @@ export default async function ProyectoPage({ params }: { params: Promise<{ id: s
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-[#181b22] rounded-lg p-4 border border-gray-700 flex flex-col items-center text-gray-200">
             <span className="font-semibold mb-2 text-white">Código Fuente:</span>
-            <a href={proyecto.repositoryLink} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline text-xs">Ver repositorio</a>
+            {proyecto.repositoryLink && proyecto.repositoryLink.trim() !== "" ? (
+              <a href={proyecto.repositoryLink} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline text-xs">Ver repositorio</a>
+            ) : (
+              <span className="text-gray-400 text-xs">No disponible</span>
+            )}
           </div>
           <div className="bg-[#181b22] rounded-lg p-4 border border-gray-700 flex flex-col items-center text-gray-200">
             <span className="font-semibold mb-2 text-white">Manual de Programador:</span>
-            <a href={proyecto.document} download className="text-blue-400 underline text-xs">Descargar</a>
+            {proyecto.document && proyecto.document.trim() !== "" ? (
+              <a href={proyecto.document} download className="text-blue-400 underline text-xs">Descargar</a>
+            ) : (
+              <span className="text-gray-400 text-xs">No disponible</span>
+            )}
           </div>
           <div className="bg-[#181b22] rounded-lg p-4 border border-gray-700 flex flex-col items-center text-gray-200">
             <span className="font-semibold mb-2 text-white">Puntaje Promedio:</span>
@@ -147,13 +155,19 @@ export default async function ProyectoPage({ params }: { params: Promise<{ id: s
         <div className="mb-6">
           <h3 className="font-semibold text-lg mb-2 text-white">Imágenes del Sistema</h3>
           <div className="flex flex-col items-center">
-            <Image 
-              src={proyecto.image} 
-              alt="Imagen del sistema" 
-              width={800}
-              height={600}
-              className="rounded-lg w-full max-w-2xl border border-gray-700" 
-            />
+            {proyecto.image && proyecto.image.trim() !== "" ? (
+              <Image 
+                src={proyecto.image} 
+                alt="Imagen del sistema" 
+                width={800}
+                height={600}
+                className="rounded-lg w-full max-w-2xl border border-gray-700" 
+              />
+            ) : (
+              <div className="w-full max-w-2xl h-64 bg-gray-800 rounded-lg border border-gray-700 flex items-center justify-center">
+                <span className="text-gray-400 text-sm">No hay imagen disponible</span>
+              </div>
+            )}
           </div>
         </div>
         {/* Comentarios */}
