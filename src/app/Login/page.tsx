@@ -76,7 +76,7 @@ export default function Login() {
         console.log('User data extracted:', userData);
         
         // Usar el contexto de autenticación con datos completos del usuario
-        login(result.token.token, userData);
+        login(result.token, userData);
         
         // Limpiar el formulario
         reset();
