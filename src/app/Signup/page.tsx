@@ -20,10 +20,14 @@ import { format } from "date-fns";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { CalendarIcon, EyeIcon, EyeOffIcon } from "lucide-react";
+import { CalendarIcon, EyeIcon, EyeOffIcon, Loader2 } from "lucide-react";
+
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import axios from "axios";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 const today = new Date();
 const maxAllowedDate = new Date(
@@ -50,6 +54,8 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export default function Signup() {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -115,7 +121,7 @@ export default function Signup() {
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-[#161B22]">
       <div className="flex-[3] flex flex-col justify-center items-center px-8 py-6 mx-6">
-        <Image src="/uneg-logo.png" alt="UNEG" width={80} height={80} />
+        <Image src="/pngs/uneg-logo.png" alt="UNEG" width={80} height={80} />
         <h1 className="text-3xl font-bold mt-5 text-white">Registro</h1>
         <p className="text-sm text-white mt-2">
           Regístrate y disfruta de un mundo de posibilidades
@@ -228,7 +234,6 @@ export default function Signup() {
                 </FormItem>
               )}
             />
-
             <Button
               type="submit"
               className="w-full bg-[#58A6FF] text-black hover:bg-blue-500 transition-colors"
@@ -237,17 +242,6 @@ export default function Signup() {
             </Button>
           </form>
         </Form>
-        {/* <div className="flex items-center justify-center my-4 w-full max-w-sm">
-          <span className="mx-2 text-white">o</span>
-        </div>
-        <Button
-          variant="outline"
-          className="w-full max-w-sm flex items-center justify-center gap-2 hover:bg-gray-300"
-        >
-          Regístrate con Google
-          <Image src="/icons/google.svg" alt="Google" width={15} height={15} />
-        </Button> */}
-
         <p className="text-sm text-white mt-4">
           Ya tienes una cuenta?{" "}
           <Link href="/Login" className="text-[#58A6FF] underline">
@@ -263,6 +257,11 @@ export default function Signup() {
           className="object-cover rounded-lg"
         />
       </div>
+      {isLoading && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <Loader2 className="h-12 w-12 text-white animate-spin" />
+        </div>
+      )}
     </div>
   );
 }
