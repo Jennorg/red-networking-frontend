@@ -32,7 +32,7 @@ export interface Comment {
   author: string;
   authorAvatar?: string;
   date: string;
-  likes?: number;
+  likes: string[]; // en lugar de number
   replies?: Comment[];
 }
 
@@ -143,6 +143,27 @@ export function ProjectCard({
     }
   };
 
+  const handleLike = async (commentId: string) => {
+    if (!user?.id) return;
+
+    try {
+      const res = await axios.post(
+        `https://red-networking-backend.vercel.app/api/projects/comentarios/${commentId}/like`,
+        { userId: user.id }
+      );
+
+      if (res.data.ok) {
+        setComments((prev) =>
+          prev.map((c) =>
+            c._id === commentId ? { ...c, likes: res.data.resultado.likes } : c
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error al dar like:", error);
+    }
+  };
+
   const renderComment = (comment: Comment) => (
     <Card key={comment._id} className="bg-gray-800 border border-gray-700 mb-3">
       <CardHeader className="pb-2">
@@ -170,9 +191,16 @@ export function ProjectCard({
         <div className="space-y-3 flex flex-col">
           <p className="text-white font-light text-sm">{comment.content}</p>
           <div className="flex gap-3">
-            <button className="flex items-center gap-1 text-gray-400 hover:text-red-500">
+            <button
+              className={`flex items-center gap-1 text-xs ${
+                comment.likes.includes(user?.id ?? "")
+                  ? "text-red-500"
+                  : "text-gray-400 hover:text-red-500"
+              }`}
+              onClick={() => handleLike(comment._id)}
+            >
               <Heart className="w-4 h-4" />
-              <span className="text-xs">{comment.likes || 0}</span>
+              <span>{comment.likes.length}</span>
             </button>
             <button className="flex items-center gap-1 text-gray-400 hover:text-blue-500">
               <MessageCircleMore className="w-4 h-4" />
