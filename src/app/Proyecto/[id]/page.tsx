@@ -1,10 +1,20 @@
+"use client"
 /// <reference types="react" />
+import React from "react";
 import { notFound } from 'next/navigation';
 import axios from "axios";
+import { API_ENDPOINTS } from "@/config/env";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { Github, FileText, Download } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Heart, MessageCircleMore, Loader2 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Textarea } from "@/components/ui/textarea";
+import { useEffect, useState } from "react";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface Proyecto {
   _id: string;
@@ -21,9 +31,19 @@ interface Proyecto {
   date: string;
 }
 
+interface Comment {
+  _id: string;
+  content: string;
+  author: string;
+  authorAvatar?: string;
+  date: string;
+  likes: string[];
+  replies?: Comment[];
+}
+
 async function getProyecto(id: string): Promise<Proyecto | null> {
   try {
-    const res = await axios.get(`https://red-networking-backend.vercel.app/api/projects/${id}`);
+    const res = await axios.get(API_ENDPOINTS.PROJECT_DETAILS(id));
     if (!res.data || !res.data.proyecto) return null;
     return res.data.proyecto;
   } catch {
@@ -60,16 +80,170 @@ async function getAuthorNames(authorIds: string[]): Promise<string[]> {
   }
 }
 
-export default async function ProyectoPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const proyecto = await getProyecto(id);
+export default function ProyectoPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = React.use(params);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
+  const [commentsError, setCommentsError] = useState<string | null>(null);
+  const [showCommentInput, setShowCommentInput] = useState(false);
+  const [newComment, setNewComment] = useState("");
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const { user, isAuthenticated } = useAuth();
+  const [proyecto, setProyecto] = useState<Proyecto | null>(null);
+  const [authorNames, setAuthorNames] = useState<string[]>([]);
+  const [iaSummary, setIaSummary] = useState<string | null>(null);
+  const [isLoadingSummary, setIsLoadingSummary] = useState(false);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchProyecto = async () => {
+      const p = await getProyecto(id);
+      setProyecto(p);
+      if (p) {
+        const names = await getAuthorNames(p.authors || []);
+        setAuthorNames(names);
+      }
+    };
+    fetchProyecto();
+  }, [id]);
+
+  useEffect(() => {
+    const fetchComments = async () => {
+      setIsLoadingComments(true);
+      setCommentsError(null);
+      try {
+        const response = await axios.get(API_ENDPOINTS.PROJECT_COMMENTS(id));
+        const commentsData = Array.isArray(response.data.comentarios)
+          ? response.data.comentarios
+          : [];
+        setComments(commentsData);
+      } catch (error) {
+        setCommentsError("Error al cargar los comentarios");
+        setComments([]);
+      } finally {
+        setIsLoadingComments(false);
+      }
+    };
+    fetchComments();
+  }, [id]);
+
+  useEffect(() => {
+    setIsLoadingSummary(true);
+    setSummaryError(null);
+    setIaSummary(null);
+    axios.get(`https://red-networking-backend.vercel.app/api/resumen-ia/${id}`)
+      .then(res => {
+        if (res.data && res.data.ok && res.data.resumen && res.data.resumen.response) {
+          setIaSummary(res.data.resumen.response);
+        } else {
+          setSummaryError('No se pudo obtener el resumen.');
+        }
+      })
+      .catch(() => setSummaryError('Error al obtener el resumen.'))
+      .finally(() => setIsLoadingSummary(false));
+  }, [id]);
+
+  const handleAddComment = async () => {
+    if (!newComment.trim()) return;
+    setIsSubmittingComment(true);
+    try {
+      const res = await axios.post(
+        `https://red-networking-backend.vercel.app/api/projects/${id}/agregar-comentario`,
+        {
+          content: newComment,
+          authorID: user?.id,
+        }
+      );
+      if (res.data.ok) {
+        setComments((prev) => [res.data.comentario, ...prev]);
+        setNewComment("");
+        setShowCommentInput(false);
+      } else {
+        // Manejar error
+      }
+    } catch (err) {
+      // Manejar error
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
+
+  const handleLike = async (commentId: string) => {
+    if (!user?.id) return;
+    try {
+      const res = await axios.post(
+        `https://red-networking-backend.vercel.app/api/projects/comentarios/${commentId}/like`,
+        { userId: user.id }
+      );
+      if (res.data.ok) {
+        setComments((prev) =>
+          prev.map((c) =>
+            c._id === commentId ? { ...c, likes: res.data.resultado.likes } : c
+          )
+        );
+      }
+    } catch (error) {
+      // Manejar error
+    }
+  };
+
+  const renderComment = (comment: Comment) => {
+    // Usar createdAt si existe, si no, usar date
+    const dateString = (comment as any).createdAt || comment.date;
+    let fechaFormateada = "Fecha no disponible";
+    if (dateString) {
+      const dateObj = new Date(dateString);
+      if (!isNaN(dateObj.getTime())) {
+        fechaFormateada = dateObj.toLocaleDateString();
+      }
+    }
+    return (
+      <div key={comment._id} className="bg-gray-800 border border-gray-700 mb-3 rounded">
+        <div className="flex items-center gap-2 p-3 border-b border-gray-700">
+          <Avatar className="w-6 h-6">
+            <AvatarImage
+              src={comment.authorAvatar || "/pngs/avatar.png"}
+              alt={`Avatar de ${comment.author}`}
+            />
+            <AvatarFallback>
+              {comment.author ? comment.author.substring(0, 2).toUpperCase() : "CN"}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-col">
+            <span className="text-blue-400 text-xs">{comment.author}</span>
+            <span className="text-gray-400 text-xs ml-2">
+              {fechaFormateada}
+            </span>
+          </div>
+        </div>
+        <div className="p-3">
+          <p className="text-white font-light text-sm mb-2">{comment.content}</p>
+          <div className="flex gap-3">
+            <button
+              className={`flex items-center gap-1 text-xs ${
+                comment.likes.includes(user?.id ?? "")
+                  ? "text-red-500"
+                  : "text-gray-400 hover:text-red-500"
+              }`}
+              onClick={() => handleLike(comment._id)}
+            >
+              <Heart className="w-4 h-4" />
+              <span>{comment.likes.length}</span>
+            </button>
+            <button className="flex items-center gap-1 text-gray-400 hover:text-blue-500">
+              <MessageCircleMore className="w-4 h-4" />
+              <span className="text-xs">Responder</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (!proyecto) {
-    return notFound();
+    return <div className="text-center text-white">Cargando...</div>;
   }
 
-  // Obtener nombres de autores
-  const authorNames = await getAuthorNames(proyecto.authors || []);
-  
   // Debug: ver el valor de la fecha
   console.log('Fecha del proyecto:', proyecto.date);
   console.log('Tipo de fecha:', typeof proyecto.date);
@@ -240,20 +414,86 @@ export default async function ProyectoPage({ params }: { params: Promise<{ id: s
             )}
           </div>
         </div>
+        {/* Resumen IA */}
+        <div className="bg-[#1e293b] border-2 border-blue-500 rounded-lg p-4 my-6 text-gray-200 shadow-lg">
+          <h3 className="font-semibold text-lg mb-2 text-blue-400">Resumen generado por IA</h3>
+          {isLoadingSummary && <div className="text-blue-400">Cargando resumen...</div>}
+          {summaryError && <div className="text-red-400">{summaryError}</div>}
+          {iaSummary && (
+            <div className="prose prose-invert max-w-none max-h-72 overflow-y-auto pr-2">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  h1: ({node, ...props}) => <h1 className="underline decoration-blue-400 mb-2" {...props} />,
+                  h2: ({node, ...props}) => <h2 className="underline decoration-blue-400 mb-2" {...props} />,
+                  h3: ({node, ...props}) => <h3 className="underline decoration-blue-400 mb-2" {...props} />,
+                  em: ({node, ...props}) => <em className="text-blue-300 italic" {...props} />,
+                  strong: ({node, ...props}) => <strong className="text-blue-400 font-bold" {...props} />,
+                  li: ({node, ...props}) => <li className="mb-1 pl-2 list-disc list-inside" {...props} />,
+                  p: ({node, ...props}) => <p className="mb-2" {...props} />,
+                }}
+              >
+                {iaSummary}
+              </ReactMarkdown>
+            </div>
+          )}
+        </div>
         {/* Comentarios */}
         <div className="bg-[#181b22] rounded-lg p-4 border border-gray-700 mt-6 text-gray-200">
-          <h3 className="font-semibold text-lg mb-2 text-white">Comentarios</h3>
-          <ul className="space-y-2">
-            {!proyecto.comments || proyecto.comments.length === 0 ? (
-              <li className="text-gray-400 text-sm">Sin comentarios.</li>
-            ) : (
-              proyecto.comments.map((comment, idx) => (
-                <li key={idx} className="bg-gray-800 rounded p-3 text-sm text-gray-200 border border-gray-700">
-                  {comment}
-                </li>
-              ))
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-semibold text-lg text-white">Comentarios</h3>
+            {isAuthenticated && (
+              <button
+                className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
+                onClick={() => setShowCommentInput((prev) => !prev)}
+              >
+                {showCommentInput ? "Cancelar" : "Agregar comentario"}
+              </button>
             )}
-          </ul>
+          </div>
+          {showCommentInput && isAuthenticated && (
+            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center mb-4">
+              <div className="relative w-full">
+                <Textarea
+                  value={newComment}
+                  onChange={(e) => {
+                    if (e.target.value.length <= 1000) {
+                      setNewComment(e.target.value);
+                    }
+                  }}
+                  placeholder="Escribe tu comentario..."
+                  className="bg-[#1f2937] text-white border border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none rounded-md p-3 h-12"
+                />
+                <p className="absolute bottom-1 right-4 text-xs text-gray-400">
+                  {newComment.length}/1000
+                </p>
+              </div>
+              <button
+                onClick={handleAddComment}
+                disabled={isSubmittingComment || newComment.trim() === ""}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded w-full sm:w-auto"
+              >
+                {isSubmittingComment ? "Enviando..." : "Publicar"}
+              </button>
+            </div>
+          )}
+          {isLoadingComments && (
+            <div className="flex items-center justify-center p-8">
+              <Loader2 className="w-6 h-6 animate-spin text-blue-400" />
+              <span className="ml-2 text-gray-400">Cargando comentarios...</span>
+            </div>
+          )}
+          {commentsError && (
+            <div className="text-red-400 text-center p-4">{commentsError}</div>
+          )}
+          {!isLoadingComments && !commentsError && comments.length === 0 && (
+            <div className="text-gray-200 rounded text-center p-4">
+              No hay comentarios aún. ¡Sé el primero en comentar!
+            </div>
+          )}
+          {!isLoadingComments && !commentsError && comments.length > 0 && (
+            <div className="space-y-3">{comments.map(renderComment)}</div>
+          )}
         </div>
       </div>
     </DashboardLayout>

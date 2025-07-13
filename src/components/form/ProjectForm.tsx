@@ -63,7 +63,11 @@ function fileToBase64(file: File): Promise<string> {
   });
 }
 
-export default function ProjectUploadForm() {
+interface ProjectUploadFormProps {
+  onSuccess?: () => void;
+}
+
+export default function ProjectUploadForm({ onSuccess }: ProjectUploadFormProps) {
 
   const [usuarios, setUsuarios] = useState<{ id: string; nombre: string }[]>([]); 
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -128,6 +132,14 @@ async function onSubmit(values: ProjectUploadValues) {
 
     toast.success("Proyecto subido correctamente");
     form.reset();
+    
+    // Notify sidebar of projects change
+    window.dispatchEvent(new CustomEvent('projectsChanged'));
+    
+    // Close dialog if onSuccess callback is provided
+    if (onSuccess) {
+      onSuccess();
+    }
   } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       console.error("Error al enviar:", errorMessage);

@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import axios from "axios";
+import { API_ENDPOINTS } from "@/config/env";
 
 // Interfaz que representa la estructura de la respuesta de la API para un proyecto.
 export interface ProjectApiResponse {
@@ -45,27 +46,36 @@ export interface ProjectCardProps extends ProjectApiResponse {
   showComments?: boolean;
   avatarURL?: string;
   onToggleComments?: () => void;
+  isFavorited?: boolean;
+  onToggleFavorite?: () => void;
+  isFavoriteLoading?: boolean;
+  favoritos?: number
 }
 
-export function ProjectCard({
-  _id,
-  title,
-  authors = ["Desconocido"],
-  // date, // Not used
-  // tags, // Not used
-  description,
-  // repositoryLink, // Not used
-  tools = [],
-  // image, // Not used
-  // document, // Not used
-  // __v, // Not used
-  position,
-  stars = 0,
-  views = 0,
-  showComments = false,
-  avatarURL = "/pngs/avatar.png",
-  onToggleComments,
-}: ProjectCardProps) {
+export function ProjectCard(props: ProjectCardProps) {
+  const {
+    _id,
+    title,
+    authors = ["Desconocido"],
+    // date, // Not used
+    // tags, // Not used
+    description,
+    // repositoryLink, // Not used
+    tools = [],
+    // image, // Not used
+    // document, // Not used
+    // __v, // Not used
+    position,
+    stars = 0,
+    views = 0,
+    showComments = false,
+    avatarURL = "/pngs/avatar.png",
+    onToggleComments,
+    isFavorited = false,
+    onToggleFavorite,
+    isFavoriteLoading = false,
+    favoritos,
+  } = props;
   const { user } = useAuth(); // asume user.id está disponible
   const username = authors.length > 0 ? authors[0] : "Desconocido";
   const router = useRouter();
@@ -84,10 +94,8 @@ export function ProjectCard({
     setCommentsError(null);
 
     try {
-      const response = await axios.get(
-        `https://red-networking-backend.vercel.app/api/projects/${_id}/comentarios`
-      );
-      console.log("Comentarios cargados:", response.data);
+      const response = await axios.get(API_ENDPOINTS.PROJECT_COMMENTS(_id));
+      console.log('Comentarios cargados:', response.data);
       // Forzar que siempre sea un array
       const commentsData = Array.isArray(response.data.comentarios)
         ? response.data.comentarios
@@ -164,53 +172,64 @@ export function ProjectCard({
     }
   };
 
-  const renderComment = (comment: Comment) => (
-    <Card key={comment._id} className="bg-gray-800 border border-gray-700 mb-3">
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-sm">
-          <Avatar className="w-6 h-6">
-            <AvatarImage
-              src={comment.authorAvatar || "/pngs/avatar.png"}
-              alt={`Avatar de ${comment.author}`}
-            />
-            <AvatarFallback>
-              {comment.author
-                ? comment.author.substring(0, 2).toUpperCase()
-                : "CN"}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-col">
-            <span className="text-blue-400 text-xs">{comment.author}</span>
-            <span className="text-gray-400 text-xs">
-              {new Date(comment.date).toLocaleDateString()}
-            </span>
+  const renderComment = (comment: Comment) => {
+    // Usar createdAt si existe, si no, usar date
+    const dateString = (comment as any).createdAt || comment.date;
+    let fechaFormateada = "Fecha no disponible";
+    if (dateString) {
+      const dateObj = new Date(dateString);
+      if (!isNaN(dateObj.getTime())) {
+        fechaFormateada = dateObj.toLocaleDateString();
+      }
+    }
+    return (
+      <Card key={comment._id} className="bg-gray-800 border border-gray-700 mb-3">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <Avatar className="w-6 h-6">
+              <AvatarImage
+                src={comment.authorAvatar || "/pngs/avatar.png"}
+                alt={`Avatar de ${comment.author}`}
+              />
+              <AvatarFallback>
+                {comment.author
+                  ? comment.author.substring(0, 2).toUpperCase()
+                  : "CN"}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-col">
+              <span className="text-blue-400 text-xs">{comment.author}</span>
+              <span className="text-gray-400 text-xs">
+                {fechaFormateada}
+              </span>
+            </div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div className="space-y-3 flex flex-col">
+            <p className="text-white font-light text-sm">{comment.content}</p>
+            <div className="flex gap-3">
+              <button
+                className={`flex items-center gap-1 text-xs ${
+                  comment.likes.includes(user?.id ?? "")
+                    ? "text-red-500"
+                    : "text-gray-400 hover:text-red-500"
+                }`}
+                onClick={() => handleLike(comment._id)}
+              >
+                <Heart className="w-4 h-4" />
+                <span>{comment.likes.length}</span>
+              </button>
+              <button className="flex items-center gap-1 text-gray-400 hover:text-blue-500">
+                <MessageCircleMore className="w-4 h-4" />
+                <span className="text-xs">Responder</span>
+              </button>
+            </div>
           </div>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pt-0">
-        <div className="space-y-3 flex flex-col">
-          <p className="text-white font-light text-sm">{comment.content}</p>
-          <div className="flex gap-3">
-            <button
-              className={`flex items-center gap-1 text-xs ${
-                comment.likes.includes(user?.id ?? "")
-                  ? "text-red-500"
-                  : "text-gray-400 hover:text-red-500"
-              }`}
-              onClick={() => handleLike(comment._id)}
-            >
-              <Heart className="w-4 h-4" />
-              <span>{comment.likes.length}</span>
-            </button>
-            <button className="flex items-center gap-1 text-gray-400 hover:text-blue-500">
-              <MessageCircleMore className="w-4 h-4" />
-              <span className="text-xs">Responder</span>
-            </button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <div className="my-4">
@@ -232,14 +251,30 @@ export function ProjectCard({
               <div className="flex-col">
                 <h1 className="text-blue-400 mb-1">{title}</h1>
                 <h2 className="text-gray-400 font-light">
-                  @{username} · {stars} Estrellas
+                  @{username} · {(typeof stars !== 'undefined' ? stars : props.favoritos) ?? 0} Estrellas
                 </h2>
               </div>
             </div>
 
             <div className="flex gap-2">
-              <Star className="size-5 text-gray-300 hover:text-yellow-400" />
-              <p className="font-light"> {stars}</p>
+              <button
+                onClick={onToggleFavorite}
+                disabled={isFavoriteLoading}
+                className="flex items-center gap-1 hover:scale-110 transition-transform disabled:opacity-50"
+              >
+                {isFavoriteLoading ? (
+                  <Loader2 className="size-5 animate-spin text-yellow-400" />
+                ) : (
+                  <Star 
+                    className={`size-5 ${
+                      isFavorited 
+                        ? "text-yellow-400 fill-yellow-400" 
+                        : "text-gray-300 hover:text-yellow-400"
+                    }`} 
+                  />
+                )}
+                <p className="font-light"> {stars}</p>
+              </button>
               {views > 0 && (
                 <>
                   <Eye className="size-5 text-gray-300 hover:text-blue-400" />

@@ -2,11 +2,13 @@
 
 import React from "react";
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 import { ProjectCard, ProjectCardProps } from "@/components/card/ProjectCard";
 import { SmartPagination } from "@/components/ui/smart-pagination";
 import { API_ENDPOINTS } from "@/config/env";
+import { useAuth } from "@/contexts/AuthContext";
+import { useAuthenticatedRequest } from "@/hooks/useAuthenticatedRequest";
 
 interface PaginationData {
   current_page: number;
@@ -17,12 +19,32 @@ interface PaginationData {
   total: number;
 }
 
+// Define la interfaz del backend para evitar errores de tipo
+interface BackendProject {
+  favoritos: number;
+  [key: string]: any;
+}
+
 const Main = () => {
+  const { user, isAuthenticated } = useAuth();
+  const { post, delete: del } = useAuthenticatedRequest();
   const [projects, setProjects] = useState<ProjectCardProps[]>([]);
   const [paginationInfo, setPaginationInfo] = useState<PaginationData | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [visibleComments, setVisibleComments] = useState<Set<string>>(new Set());
+  const [favoritedProjects, setFavoritedProjects] = useState<Set<string>>(new Set());
+  const [favoriteLoading, setFavoriteLoading] = useState<Set<string>>(new Set());
+
+  // Custom event to notify sidebar of favorites changes
+  const notifyFavoritesChange = () => {
+    window.dispatchEvent(new CustomEvent('favoritesChanged'));
+  };
+
+  // Custom event to notify sidebar of projects changes
+  const notifyProjectsChange = () => {
+    window.dispatchEvent(new CustomEvent('projectsChanged'));
+  };
 
   const fetchData = async (page: number) => {
     console.log(`Main: fetchData called with page ${page}`);
@@ -38,9 +60,16 @@ const Main = () => {
       console.log(apiResponse)
 
       console.log(`Main: API response received, setting data`);
-      setProjects(apiResponse.data);
+      setProjects(
+        apiResponse.data .map(project => ({
+          ...project,
+          stars: project.favoritos ?? 0,
+        })) as ProjectCardProps[]
+      );
+      console.log(apiResponse.data); 
       setPaginationInfo(apiResponse);
       setCurrentPage(apiResponse.current_page);
+      notifyProjectsChange(); // Notify sidebar of projects update
     } catch (error) {
       console.error("Error fetching data:", error);
       setProjects([]);
@@ -49,6 +78,176 @@ const Main = () => {
       setIsLoading(false);
     }
   };
+
+  // Elimino fetchUserFavorites y los useEffect relacionados
+  // Elimino las llamadas a fetchUserFavorites en addToFavorites y removeFromFavorites
+  // Mantengo solo el manejo local de favoritos
+
+  const addToFavorites = useCallback(async (projectId: string) => {
+    if (!isAuthenticated || !user) {
+      console.log("User not authenticated, cannot add to favorites");
+      return;
+    }
+
+    setFavoriteLoading(prev => new Set(prev).add(projectId));
+    
+    try {
+      console.log("Adding to favorites - User ID:", user.id, "Project ID:", projectId);
+      console.log("API URL:", API_ENDPOINTS.USER_FAVORITE_PROJECT(user.id, projectId));
+      console.log("User object:", user);
+      console.log("Token available:", !!localStorage.getItem('token'));
+      
+      const token = localStorage.getItem('token');
+      
+      // Try the first endpoint structure
+      try {
+        const response = await axios.post(
+          API_ENDPOINTS.USER_FAVORITE_PROJECT(user.id, projectId),
+          {},
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+        
+        console.log("Project added to favorites:", response.data);
+        setFavoritedProjects(prev => new Set(prev).add(projectId));
+        notifyFavoritesChange(); // Notify sidebar
+        return; // Success, exit early
+      } catch (firstError) {
+        console.log("First endpoint failed, trying alternative:", firstError);
+        
+        // Try alternative endpoint structure
+        try {
+          const response = await axios.post(
+            API_ENDPOINTS.FAVORITE_PROJECT_ALT(projectId),
+            { userId: user.id },
+            {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+          
+          console.log("Project added to favorites (alternative):", response.data);
+          setFavoritedProjects(prev => new Set(prev).add(projectId));
+          notifyFavoritesChange(); // Notify sidebar
+          return; // Success, exit early
+        } catch (secondError) {
+          console.log("Alternative endpoint also failed:", secondError);
+          throw secondError; // Re-throw to be caught by outer catch
+        }
+      }
+    } catch (error: unknown) {
+      console.error("Error adding project to favorites:", error);
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as any;
+        console.error("Response status:", axiosError.response?.status);
+        console.error("Response data:", axiosError.response?.data);
+        console.error("Response headers:", axiosError.response?.headers);
+        console.error("Request URL:", axiosError.config?.url);
+        console.error("Request method:", axiosError.config?.method);
+        console.error("Request headers:", axiosError.config?.headers);
+      }
+    } finally {
+      setFavoriteLoading(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(projectId);
+        return newSet;
+      });
+    }
+  }, [isAuthenticated, user]);
+
+  const removeFromFavorites = useCallback(async (projectId: string) => {
+    if (!isAuthenticated || !user) {
+      console.log("User not authenticated, cannot remove from favorites");
+      return;
+    }
+
+    setFavoriteLoading(prev => new Set(prev).add(projectId));
+    
+    try {
+      const token = localStorage.getItem('token');
+      
+      // Try the first endpoint structure
+      try {
+        const response = await axios.delete(
+          API_ENDPOINTS.USER_FAVORITE_PROJECT(user.id, projectId),
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+        
+        console.log("Project removed from favorites:", response.data);
+        setFavoritedProjects(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(projectId);
+          return newSet;
+        });
+        notifyFavoritesChange(); // Notify sidebar
+        return; // Success, exit early
+      } catch (firstError) {
+        console.log("First endpoint failed, trying alternative:", firstError);
+        
+        // Try alternative endpoint structure
+        try {
+          const response = await axios.delete(
+            API_ENDPOINTS.FAVORITE_PROJECT_ALT(projectId),
+            {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              },
+              data: { userId: user.id }
+            }
+          );
+          
+          console.log("Project removed from favorites (alternative):", response.data);
+          setFavoritedProjects(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(projectId);
+            return newSet;
+          });
+          notifyFavoritesChange(); // Notify sidebar
+          return; // Success, exit early
+        } catch (secondError) {
+          console.log("Alternative endpoint also failed:", secondError);
+          throw secondError; // Re-throw to be caught by outer catch
+        }
+      }
+    } catch (error) {
+      console.error("Error removing project from favorites:", error);
+    } finally {
+      setFavoriteLoading(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(projectId);
+        return newSet;
+      });
+    }
+  }, [isAuthenticated, user]);
+
+  const toggleFavorite = useCallback((projectId: string) => {
+    if (!isAuthenticated) {
+      console.log("User not authenticated, cannot toggle favorite");
+      return;
+    }
+
+    if (favoritedProjects.has(projectId)) {
+      removeFromFavorites(projectId);
+    } else {
+      addToFavorites(projectId);
+    }
+  }, [isAuthenticated, favoritedProjects, addToFavorites, removeFromFavorites]);
+
+  // useEffect(() => {
+  //   fetchUserFavorites();
+  // }, [fetchUserFavorites]);
 
   useEffect(() => {
     fetchData(currentPage);
@@ -85,6 +284,9 @@ const Main = () => {
           {...project}
           showComments={visibleComments.has(project._id)}
           onToggleComments={() => toggleComments(project._id)}
+          isFavorited={favoritedProjects.has(project._id)}
+          onToggleFavorite={() => toggleFavorite(project._id)}
+          isFavoriteLoading={favoriteLoading.has(project._id)}
         />
       ))}
 
