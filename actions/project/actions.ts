@@ -1,6 +1,6 @@
-import axiosInstance from "lib/axios";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
+import axiosInstance from "../../lib/axios";
 
 export interface RatingData {
   projectId: string;

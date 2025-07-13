@@ -20,13 +20,13 @@ import {
 import { CreateProjectRatingForm } from "../form/CreateProjectRatingForm";
 
 const ProjectDropDownActions = ({ project }: { project?: Project }) => {
-  const [openDelete, setOpenDelete] = useState(false);
-  const [openEvaluate, setOpenEvaluate] = useState(false);
+  //const [openDelete, setOpenDelete] = useState(false);
+  const [openRating, setOpenRating] = useState(false);
 
-  const handleDelete = async (id: number | string) => {
-    //await deleteInformationSource.mutateAsync(id);
-    setOpenDelete(false);
-  };
+  // const handleDelete = async (id: number | string) => {
+  //   //await deleteInformationSource.mutateAsync(id);
+  //   //setOpenDelete(false);
+  // };
   return (
     <>
       <DropdownMenu>
@@ -41,7 +41,7 @@ const ProjectDropDownActions = ({ project }: { project?: Project }) => {
           align="center"
           className="flex gap-2 justify-center"
         >
-          <DropdownMenuItem onClick={() => setOpenEvaluate(true)}>
+          <DropdownMenuItem onClick={() => setOpenRating(true)}>
             <ClipboardPenLine className="size-5 text-green-500" />
             <p className="pl-2">Calificar</p>
           </DropdownMenuItem>
@@ -49,7 +49,7 @@ const ProjectDropDownActions = ({ project }: { project?: Project }) => {
       </DropdownMenu>
 
       {/* DIALOGO DE CALIFICACION */}
-      <Dialog open={openEvaluate} onOpenChange={setOpenEvaluate}>
+      <Dialog open={openRating} onOpenChange={setOpenRating}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="text-center">Evaluar Proyecto</DialogTitle>
@@ -57,7 +57,7 @@ const ProjectDropDownActions = ({ project }: { project?: Project }) => {
 
             <CreateProjectRatingForm
               initialData={project}
-              onClose={() => setOpenEvaluate(false)}
+              onClose={() => setOpenRating(false)}
             />
           </DialogHeader>
         </DialogContent>

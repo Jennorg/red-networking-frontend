@@ -24,7 +24,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Project } from "../../../types";
 import { Textarea } from "../ui/textarea";
-import { useCreateProjectRating } from "actions/project/actions";
+import { useCreateProjectRating } from "../../../actions/project/actions";
 
 const FormSchema = z.object({
   security: z.string().regex(/^\d+$/, "Debe ser un número"),
