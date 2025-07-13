@@ -2,10 +2,12 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { Eye, Star, MessageCircleMore, Heart, Loader2 } from "lucide-react";
 import { LanguageIcon } from "../misc/LanguageIcon";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import axios from "axios";
 
 // Interfaz que representa la estructura de la respuesta de la API para un proyecto.
@@ -30,7 +32,7 @@ export interface Comment {
   author: string;
   authorAvatar?: string;
   date: string;
-  likes?: number;
+  likes: string[]; // en lugar de number
   replies?: Comment[];
 }
 
@@ -64,31 +66,37 @@ export function ProjectCard({
   avatarURL = "/pngs/avatar.png",
   onToggleComments,
 }: ProjectCardProps) {
+  const { user } = useAuth(); // asume user.id está disponible
   const username = authors.length > 0 ? authors[0] : "Desconocido";
   const router = useRouter();
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [commentsError, setCommentsError] = useState<string | null>(null);
   const [hasLoadedComments, setHasLoadedComments] = useState(false);
+  const [showCommentInput, setShowCommentInput] = useState(false);
+  const [newComment, setNewComment] = useState("");
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
   const fetchComments = useCallback(async () => {
     if (!showComments || hasLoadedComments) return; // No cargar si ya están cargados
-    
+
     setIsLoadingComments(true);
     setCommentsError(null);
-    
+
     try {
-      const response = await axios.get(`https://red-networking-backend.vercel.app/api/projects/${_id}/comentarios`);
-      console.log('Comentarios cargados:', response.data);
+      const response = await axios.get(
+        `https://red-networking-backend.vercel.app/api/projects/${_id}/comentarios`
+      );
+      console.log("Comentarios cargados:", response.data);
       // Forzar que siempre sea un array
-      const commentsData = Array.isArray(response.data.data)
-        ? response.data.data
+      const commentsData = Array.isArray(response.data.comentarios)
+        ? response.data.comentarios
         : [];
       setComments(commentsData);
       setHasLoadedComments(true);
     } catch (error) {
-      console.error('Error cargando comentarios:', error);
-      setCommentsError('Error al cargar los comentarios');
+      console.error("Error cargando comentarios:", error);
+      setCommentsError("Error al cargar los comentarios");
       setComments([]);
       setHasLoadedComments(true);
     } finally {
@@ -107,31 +115,92 @@ export function ProjectCard({
     }
   }, [showComments, _id, fetchComments]);
 
+  const handleAddComment = async () => {
+    if (!newComment.trim()) return;
+
+    setIsSubmittingComment(true);
+
+    try {
+      const res = await axios.post(
+        `https://red-networking-backend.vercel.app/api/projects/${_id}/agregar-comentario`,
+        {
+          content: newComment,
+          authorID: user?.id,
+        }
+      );
+
+      if (res.data.ok) {
+        setComments((prev) => [res.data.comentario, ...prev]);
+        setNewComment("");
+        setShowCommentInput(false);
+      } else {
+        console.error("Error al comentar:", res.data.error);
+      }
+    } catch (err) {
+      console.error("Error de red:", err);
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
+
+  const handleLike = async (commentId: string) => {
+    if (!user?.id) return;
+
+    try {
+      const res = await axios.post(
+        `https://red-networking-backend.vercel.app/api/projects/comentarios/${commentId}/like`,
+        { userId: user.id }
+      );
+
+      if (res.data.ok) {
+        setComments((prev) =>
+          prev.map((c) =>
+            c._id === commentId ? { ...c, likes: res.data.resultado.likes } : c
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error al dar like:", error);
+    }
+  };
+
   const renderComment = (comment: Comment) => (
     <Card key={comment._id} className="bg-gray-800 border border-gray-700 mb-3">
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-sm">
           <Avatar className="w-6 h-6">
-            <AvatarImage src={comment.authorAvatar || "/pngs/avatar.png"} alt={`Avatar de ${comment.author}`} />
+            <AvatarImage
+              src={comment.authorAvatar || "/pngs/avatar.png"}
+              alt={`Avatar de ${comment.author}`}
+            />
             <AvatarFallback>
-              {comment.author ? comment.author.substring(0, 2).toUpperCase() : "CN"}
+              {comment.author
+                ? comment.author.substring(0, 2).toUpperCase()
+                : "CN"}
             </AvatarFallback>
           </Avatar>
           <div className="flex-col">
             <span className="text-blue-400 text-xs">{comment.author}</span>
-            <span className="text-gray-400 text-xs">{new Date(comment.date).toLocaleDateString()}</span>
+            <span className="text-gray-400 text-xs">
+              {new Date(comment.date).toLocaleDateString()}
+            </span>
           </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-0">
         <div className="space-y-3 flex flex-col">
-          <p className="text-white font-light text-sm">
-            {comment.content}
-          </p>
+          <p className="text-white font-light text-sm">{comment.content}</p>
           <div className="flex gap-3">
-            <button className="flex items-center gap-1 text-gray-400 hover:text-red-500">
+            <button
+              className={`flex items-center gap-1 text-xs ${
+                comment.likes.includes(user?.id ?? "")
+                  ? "text-red-500"
+                  : "text-gray-400 hover:text-red-500"
+              }`}
+              onClick={() => handleLike(comment._id)}
+            >
               <Heart className="w-4 h-4" />
-              <span className="text-xs">{comment.likes || 0}</span>
+              <span>{comment.likes.length}</span>
             </button>
             <button className="flex items-center gap-1 text-gray-400 hover:text-blue-500">
               <MessageCircleMore className="w-4 h-4" />
@@ -155,13 +224,13 @@ export function ProjectCard({
                 </span>
               )}
               <Avatar className="w-8 h-8">
-                  <AvatarImage src={avatarURL} alt={`Avatar de ${username}`} />
-                  <AvatarFallback>
-                    {username ? username.substring(0, 2).toUpperCase() : "CN"}
-                  </AvatarFallback>
-                </Avatar>
+                <AvatarImage src={avatarURL} alt={`Avatar de ${username}`} />
+                <AvatarFallback>
+                  {username ? username.substring(0, 2).toUpperCase() : "CN"}
+                </AvatarFallback>
+              </Avatar>
               <div className="flex-col">
-                <h1 className="text-blue-400">{title}</h1>
+                <h1 className="text-blue-400 mb-1">{title}</h1>
                 <h2 className="text-gray-400 font-light">
                   @{username} · {stars} Estrellas
                 </h2>
@@ -196,16 +265,27 @@ export function ProjectCard({
                 ))}
               </div>
 
-              <div className="flex gap-2">
-                {onToggleComments && (
-                  <Button                    
-                    className="border-blue-400 text-blue-400 font-light hover:bg-blue-400/10 w-full sm:w-auto"
-                    onClick={onToggleComments}
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                <div className="flex gap-2">
+                  {onToggleComments && (
+                    <Button
+                      className="border-blue-400 text-blue-400 font-light hover:bg-blue-400/10"
+                      onClick={onToggleComments}
+                    >
+                      <MessageCircleMore className="w-4 h-4 mr-2" />
+                      {showComments
+                        ? "Ocultar comentarios"
+                        : "Mostrar comentarios"}
+                    </Button>
+                  )}
+                  <Button
+                    className="border-blue-400 text-blue-400 font-light hover:bg-blue-400/10"
+                    onClick={() => setShowCommentInput((prev) => !prev)}
                   >
-                    <MessageCircleMore className="w-4 h-4 mr-2" />
-                    {showComments ? "Ocultar comentarios" : "Mostrar comentarios"}
+                    {showCommentInput ? "Cancelar" : "Comentar"}
                   </Button>
-                )}
+                </div>
+
                 <Button
                   className="border-blue-400 text-blue-400 font-light hover:bg-blue-400/10 w-full sm:w-auto"
                   onClick={() => router.push(`/Proyecto/${_id}`)}
@@ -217,34 +297,66 @@ export function ProjectCard({
           </div>
         </CardContent>
       </Card>
+
       {showComments && (
         <div className="p-5 bg-gray-900 rounded-b-sm border-b-2 border-x-2 border-x-gray-700 border-b-gray-700">
           <h2 className="text-blue-400 m-3 text-2xl">Comentarios</h2>
-          
-          {isLoadingComments && (
-            <div className="flex items-center justify-center p-8">
-              <Loader2 className="w-6 h-6 animate-spin text-blue-400" />
-              <span className="ml-2 text-gray-400">Cargando comentarios...</span>
-            </div>
-          )}
-          
-          {commentsError && (
-            <div className="text-red-400 text-center p-4">
-              {commentsError}
+
+          {showCommentInput && (
+            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center mb-4">
+              <div className="relative w-full">
+                <Textarea
+                  value={newComment}
+                  onChange={(e) => {
+                    if (e.target.value.length <= 1000) {
+                      setNewComment(e.target.value);
+                    }
+                  }}
+                  placeholder="Escribe tu comentario..."
+                  className="bg-[#1f2937] text-white border border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none rounded-md p-3 h-12"
+                />
+                <p className="absolute bottom-1 right-4 text-xs text-gray-400">
+                  {newComment.length}/1000
+                </p>
+              </div>
+
+              <Button
+                onClick={handleAddComment}
+                disabled={isSubmittingComment || newComment.trim() === ""}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded w-full sm:w-auto"
+              >
+                {isSubmittingComment ? "Enviando..." : "Publicar"}
+              </Button>
             </div>
           )}
 
-          {(() => { console.log({ isLoadingComments, commentsError, comments }); return null; })()}
+          {isLoadingComments && (
+            <div className="flex items-center justify-center p-8">
+              <Loader2 className="w-6 h-6 animate-spin text-blue-400" />
+              <span className="ml-2 text-gray-400">
+                Cargando comentarios...
+              </span>
+            </div>
+          )}
+
+          {commentsError && (
+            <div className="text-red-400 text-center p-4">{commentsError}</div>
+          )}
+
+          {(() => {
+            console.log({ isLoadingComments, commentsError, comments });
+            return null;
+          })()}
           {!isLoadingComments && !commentsError && comments.length === 0 && (
             <div className="text-gray-200 rounded text-center p-4">
               No hay comentarios aún. ¡Sé el primero en comentar!
             </div>
           )}
-          
+
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4"></div>
+
           {!isLoadingComments && !commentsError && comments.length > 0 && (
-            <div className="space-y-3">
-              {comments.map(renderComment)}
-            </div>
+            <div className="space-y-3">{comments.map(renderComment)}</div>
           )}
         </div>
       )}
