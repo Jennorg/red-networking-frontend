@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import axios from "axios";
+import { API_ENDPOINTS } from "@/config/env";
 
 // Interfaz que representa la estructura de la respuesta de la API para un proyecto.
 export interface ProjectApiResponse {
@@ -45,27 +46,36 @@ export interface ProjectCardProps extends ProjectApiResponse {
   showComments?: boolean;
   avatarURL?: string;
   onToggleComments?: () => void;
+  isFavorited?: boolean;
+  onToggleFavorite?: () => void;
+  isFavoriteLoading?: boolean;
+  favoritos?: number
 }
 
-export function ProjectCard({
-  _id,
-  title,
-  authors = ["Desconocido"],
-  // date, // Not used
-  // tags, // Not used
-  description,
-  // repositoryLink, // Not used
-  tools = [],
-  // image, // Not used
-  // document, // Not used
-  // __v, // Not used
-  position,
-  stars = 0,
-  views = 0,
-  showComments = false,
-  avatarURL = "/pngs/avatar.png",
-  onToggleComments,
-}: ProjectCardProps) {
+export function ProjectCard(props: ProjectCardProps) {
+  const {
+    _id,
+    title,
+    authors = ["Desconocido"],
+    // date, // Not used
+    // tags, // Not used
+    description,
+    // repositoryLink, // Not used
+    tools = [],
+    // image, // Not used
+    // document, // Not used
+    // __v, // Not used
+    position,
+    stars = 0,
+    views = 0,
+    showComments = false,
+    avatarURL = "/pngs/avatar.png",
+    onToggleComments,
+    isFavorited = false,
+    onToggleFavorite,
+    isFavoriteLoading = false,
+    favoritos,
+  } = props;
   const { user } = useAuth(); // asume user.id está disponible
   const username = authors.length > 0 ? authors[0] : "Desconocido";
   const router = useRouter();
@@ -84,10 +94,8 @@ export function ProjectCard({
     setCommentsError(null);
 
     try {
-      const response = await axios.get(
-        `https://red-networking-backend.vercel.app/api/projects/${_id}/comentarios`
-      );
-      console.log("Comentarios cargados:", response.data);
+      const response = await axios.get(API_ENDPOINTS.PROJECT_COMMENTS(_id));
+      console.log('Comentarios cargados:', response.data);
       // Forzar que siempre sea un array
       const commentsData = Array.isArray(response.data.comentarios)
         ? response.data.comentarios
@@ -232,14 +240,30 @@ export function ProjectCard({
               <div className="flex-col">
                 <h1 className="text-blue-400 mb-1">{title}</h1>
                 <h2 className="text-gray-400 font-light">
-                  @{username} · {stars} Estrellas
+                  @{username} · {(typeof stars !== 'undefined' ? stars : props.favoritos) ?? 0} Estrellas
                 </h2>
               </div>
             </div>
 
             <div className="flex gap-2">
-              <Star className="size-5 text-gray-300 hover:text-yellow-400" />
-              <p className="font-light"> {stars}</p>
+              <button
+                onClick={onToggleFavorite}
+                disabled={isFavoriteLoading}
+                className="flex items-center gap-1 hover:scale-110 transition-transform disabled:opacity-50"
+              >
+                {isFavoriteLoading ? (
+                  <Loader2 className="size-5 animate-spin text-yellow-400" />
+                ) : (
+                  <Star 
+                    className={`size-5 ${
+                      isFavorited 
+                        ? "text-yellow-400 fill-yellow-400" 
+                        : "text-gray-300 hover:text-yellow-400"
+                    }`} 
+                  />
+                )}
+                <p className="font-light"> {stars}</p>
+              </button>
               {views > 0 && (
                 <>
                   <Eye className="size-5 text-gray-300 hover:text-blue-400" />
