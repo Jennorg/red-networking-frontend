@@ -26,6 +26,7 @@ import { Project } from "../../../types";
 import { Textarea } from "../ui/textarea";
 import { useCreateProjectRating } from "../../../actions/project/actions";
 import { Loader2 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const FormSchema = z.object({
   security: z.string().regex(/^\d+$/, "Debe ser un número"),
@@ -40,17 +41,15 @@ const FormSchema = z.object({
 type FormSchemaType = z.infer<typeof FormSchema>;
 
 interface FormProps {
-  initialData?: Project;
-  isEditing?: boolean;
+  projectId: string;
   onClose: () => void;
 }
 
-export function CreateProjectRatingForm({
-  initialData,
-  isEditing,
-  onClose,
-}: FormProps) {
+export function CreateProjectRatingForm({ projectId, onClose }: FormProps) {
   const { createRating } = useCreateProjectRating();
+  const { user, isAuthenticated, isLoading, token } = useAuth();
+
+  const teacherId = user?.id || "";
 
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(FormSchema),
@@ -58,26 +57,21 @@ export function CreateProjectRatingForm({
   });
 
   const onSubmit = async (data: FormSchemaType) => {
-    console.log("Datos del formulario:", data);
-    if (initialData && isEditing) {
-    } else {
-      const totalScore =
-        Number(data.security) +
-        Number(data.functionality) +
-        Number(data.efficiency) +
-        Number(data.design) +
-        Number(data.architecture);
-      const averageScore = totalScore / 5;
+    const totalScore =
+      Number(data.security) +
+      Number(data.functionality) +
+      Number(data.efficiency) +
+      Number(data.design) +
+      Number(data.architecture);
+    const avgScore = totalScore / 5;
 
-      const value = {
-        projectId: "6858d8a712e9a76a07d6db69",
-        data: {
-          puntuacion: averageScore,
-          feedback: data.feedback,
-        },
-      };
-      await createRating.mutateAsync(value);
-    }
+    const ratingData = {
+      projectID: projectId,
+      teacherID: teacherId,
+      score: avgScore,
+      feedback: data.feedback,
+    };
+    await createRating.mutateAsync(ratingData);
 
     onClose();
   };

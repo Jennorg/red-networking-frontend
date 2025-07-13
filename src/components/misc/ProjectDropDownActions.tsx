@@ -2,7 +2,7 @@
 
 import { ClipboardPenLine, MoreHorizontal } from "lucide-react";
 import { useState } from "react";
-import { Project } from "../../../types";
+import { CreateProjectRatingForm } from "../form/CreateProjectRatingForm";
 import { Button } from "../ui/button";
 import {
   Dialog,
@@ -17,9 +17,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { CreateProjectRatingForm } from "../form/CreateProjectRatingForm";
 
-const ProjectDropDownActions = ({ project }: { project?: Project }) => {
+const ProjectDropDownActions = ({projectId}: {projectId: string}) => {
   const [openRating, setOpenRating] = useState(false);
 
   return (
@@ -61,7 +60,7 @@ const ProjectDropDownActions = ({ project }: { project?: Project }) => {
             </DialogDescription>
 
             <CreateProjectRatingForm
-              initialData={project}
+              projectId={projectId}
               onClose={() => setOpenRating(false)}
             />
           </DialogHeader>

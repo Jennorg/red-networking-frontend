@@ -3,26 +3,21 @@ import { toast } from "sonner";
 import axiosInstance from "../../lib/axios";
 
 export interface RatingData {
-  projectId: string;
-  data: {
-    puntuacion: number;
-    feedback: string;
-  };
+  projectID: string;
+  teacherID: string | null;
+  score: number;
+  feedback: string;
 }
 export const useCreateProjectRating = () => {
   //const queryClient = useQueryClient();
   const createMutation = useMutation({
     //mutationKey: ["pilots"],
-    mutationFn: async ({ data, projectId }: RatingData) => {
-      await axiosInstance.post(
-        `/projects/${projectId}/agregar-puntuacion`,
-        data,
-        {
-          headers: {
-              "Content-Type": "application/json",
-          },
-        }
-      );
+    mutationFn: async (data: RatingData) => {
+      await axiosInstance.post(`/projects/evaluacion`, data, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
     },
     onSuccess: () => {
       //queryClient.invalidateQueries({ queryKey: ["pilots"] });

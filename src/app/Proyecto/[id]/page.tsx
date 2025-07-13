@@ -59,7 +59,7 @@ export default async function ProyectoPage({
           <h1 className="text-3xl font-bold text-center mb-2 text-white">
             Título del Proyecto:
             <span className="text-blue-400">{proyecto.title}</span>
-            <ProjectDropDownActions />
+            <ProjectDropDownActions projectId={id} />
           </h1>
         </div>
         {/* Autores, Fecha, Etiquetas */}
