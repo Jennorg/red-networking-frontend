@@ -51,7 +51,7 @@ const Header = () => {
                     <p className="text-xs text-gray-300">Usuario ID: {user.id}</p>
                   </div>
                   <NavigationMenuLink asChild className="hover:!bg-gray-700 active:!bg-gray-700 focus:!bg-gray-700 hover:text-white">
-                    <a href="/perfil" className="block px-4 py-2 hover:text-white">Perfil</a>
+                    <a href="/Perfil" className="block px-4 py-2 hover:text-white">Perfil</a>
                   </NavigationMenuLink>
                   <NavigationMenuLink asChild className="hover:!bg-gray-700 active:!bg-gray-700 focus:!bg-gray-700 hover:text-white">
                     <button 
