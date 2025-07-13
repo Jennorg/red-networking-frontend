@@ -18,13 +18,13 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 
-const ProjectDropDownActions = ({projectId}: {projectId: string}) => {
+const ProjectDropDownActions = ({ projectId }: { projectId: string }) => {
   const [openRating, setOpenRating] = useState(false);
 
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger>
+        <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
             className="h-8 w-8 p-0 text-gray-300 hover:text-white"
