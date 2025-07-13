@@ -172,53 +172,64 @@ export function ProjectCard(props: ProjectCardProps) {
     }
   };
 
-  const renderComment = (comment: Comment) => (
-    <Card key={comment._id} className="bg-gray-800 border border-gray-700 mb-3">
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-sm">
-          <Avatar className="w-6 h-6">
-            <AvatarImage
-              src={comment.authorAvatar || "/pngs/avatar.png"}
-              alt={`Avatar de ${comment.author}`}
-            />
-            <AvatarFallback>
-              {comment.author
-                ? comment.author.substring(0, 2).toUpperCase()
-                : "CN"}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-col">
-            <span className="text-blue-400 text-xs">{comment.author}</span>
-            <span className="text-gray-400 text-xs">
-              {new Date(comment.date).toLocaleDateString()}
-            </span>
+  const renderComment = (comment: Comment) => {
+    // Usar createdAt si existe, si no, usar date
+    const dateString = (comment as any).createdAt || comment.date;
+    let fechaFormateada = "Fecha no disponible";
+    if (dateString) {
+      const dateObj = new Date(dateString);
+      if (!isNaN(dateObj.getTime())) {
+        fechaFormateada = dateObj.toLocaleDateString();
+      }
+    }
+    return (
+      <Card key={comment._id} className="bg-gray-800 border border-gray-700 mb-3">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <Avatar className="w-6 h-6">
+              <AvatarImage
+                src={comment.authorAvatar || "/pngs/avatar.png"}
+                alt={`Avatar de ${comment.author}`}
+              />
+              <AvatarFallback>
+                {comment.author
+                  ? comment.author.substring(0, 2).toUpperCase()
+                  : "CN"}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-col">
+              <span className="text-blue-400 text-xs">{comment.author}</span>
+              <span className="text-gray-400 text-xs">
+                {fechaFormateada}
+              </span>
+            </div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div className="space-y-3 flex flex-col">
+            <p className="text-white font-light text-sm">{comment.content}</p>
+            <div className="flex gap-3">
+              <button
+                className={`flex items-center gap-1 text-xs ${
+                  comment.likes.includes(user?.id ?? "")
+                    ? "text-red-500"
+                    : "text-gray-400 hover:text-red-500"
+                }`}
+                onClick={() => handleLike(comment._id)}
+              >
+                <Heart className="w-4 h-4" />
+                <span>{comment.likes.length}</span>
+              </button>
+              <button className="flex items-center gap-1 text-gray-400 hover:text-blue-500">
+                <MessageCircleMore className="w-4 h-4" />
+                <span className="text-xs">Responder</span>
+              </button>
+            </div>
           </div>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pt-0">
-        <div className="space-y-3 flex flex-col">
-          <p className="text-white font-light text-sm">{comment.content}</p>
-          <div className="flex gap-3">
-            <button
-              className={`flex items-center gap-1 text-xs ${
-                comment.likes.includes(user?.id ?? "")
-                  ? "text-red-500"
-                  : "text-gray-400 hover:text-red-500"
-              }`}
-              onClick={() => handleLike(comment._id)}
-            >
-              <Heart className="w-4 h-4" />
-              <span>{comment.likes.length}</span>
-            </button>
-            <button className="flex items-center gap-1 text-gray-400 hover:text-blue-500">
-              <MessageCircleMore className="w-4 h-4" />
-              <span className="text-xs">Responder</span>
-            </button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <div className="my-4">
