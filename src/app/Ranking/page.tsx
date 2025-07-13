@@ -1,7 +1,5 @@
 "use client";
-
-
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { ProjectCard } from "@/components/card/ProjectCard";
 import DashboardLayout from "@/components/layout/DashboardLayout";
@@ -36,7 +34,7 @@ export default function Ranking() {
     fetchRanking();
   }, []);
 
-
+ 
 
   const handlePageChange = (page: number) => {
     // Validate page number before changing

@@ -396,7 +396,7 @@ export default function ProyectoPage({
               ) : (
                 <span className="text-gray-400 text-sm">Sin etiquetas</span>
               )}
-          </div>
+            </div>
           </div>
         </div>
         {/* Recursos */}
