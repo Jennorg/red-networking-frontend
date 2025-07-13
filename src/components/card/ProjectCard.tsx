@@ -10,6 +10,8 @@ import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import axios from "axios";
 import { API_ENDPOINTS } from "@/config/env";
+import DeleteCommentButton from "@/components/admin/DeleteCommentButton";
+import Link from "next/link";
 
 // Interfaz que representa la estructura de la respuesta de la API para un proyecto.
 export interface ProjectApiResponse {
@@ -31,6 +33,7 @@ export interface Comment {
   _id: string;
   content: string;
   author: string;
+  authorID?: string; // Add authorID field from backend
   authorAvatar?: string;
   date: string;
   likes: string[]; // en lugar de number
@@ -87,6 +90,30 @@ export function ProjectCard(props: ProjectCardProps) {
   const [newComment, setNewComment] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [localStarCount, setLocalStarCount] = useState(stars || 0);
+  const [authorNames, setAuthorNames] = useState<string[]>([]);
+  const [commentAuthorNames, setCommentAuthorNames] = useState<{ [key: string]: string }>({});
+
+  useEffect(() => {
+    // Obtener nombres de autores desde el backend
+    async function fetchAuthorNames() {
+      if (!authors || authors.length === 0) {
+        setAuthorNames(["Desconocido"]);
+        return;
+      }
+      try {
+        const res = await axios.get("https://red-networking-backend.vercel.app/auth/users");
+        const users = res.data.users || [];
+        const names = authors.map((id) => {
+          const user = users.find((u: any) => u._id === id);
+          return user ? user.name : "Usuario desconocido";
+        });
+        setAuthorNames(names);
+      } catch {
+        setAuthorNames(["Desconocido"]);
+      }
+    }
+    fetchAuthorNames();
+  }, [authors]);
 
   const fetchComments = useCallback(async () => {
     if (!showComments || hasLoadedComments) return; // No cargar si ya están cargados
@@ -102,6 +129,55 @@ export function ProjectCard(props: ProjectCardProps) {
         ? response.data.comentarios
         : [];
       setComments(commentsData);
+      
+      // Obtener nombres de autores de los comentarios
+      if (commentsData.length > 0) {
+        try {
+          // Intentar obtener nombres directamente del backend
+          const authorIds = [...new Set(commentsData.map((comment: Comment) => comment.authorID || comment.author))];
+          console.log('Unique author IDs:', authorIds);
+          
+          const authorNamesMap: { [key: string]: string } = {};
+          
+          // Para cada autor único, intentar obtener su información
+          for (const authorId of authorIds) {
+            if (!authorId || typeof authorId !== 'string') {
+              console.warn(`Invalid authorId: ${authorId}`);
+              authorNamesMap[authorId as string] = "Usuario desconocido";
+              continue;
+            }
+
+            try {
+              const userResponse = await axios.get(
+                `https://red-networking-backend.vercel.app/api/getUser/${authorId}`,
+                { timeout: 5000 }
+              );
+              console.log(`User response for ${authorId}:`, userResponse.data);
+              
+              if (userResponse.data && userResponse.data.user) {
+                authorNamesMap[authorId as string] = userResponse.data.user.name || "Usuario desconocido";
+              } else if (userResponse.data && userResponse.data.name) {
+                authorNamesMap[authorId as string] = userResponse.data.name;
+              } else {
+                authorNamesMap[authorId as string] = "Usuario desconocido";
+              }
+            } catch (error: any) {
+              console.error(`Error getting user ${authorId}:`, error);
+              authorNamesMap[authorId as string] = "Usuario desconocido";
+            }
+          }
+          
+
+          
+          console.log('Final author names map:', authorNamesMap);
+          setCommentAuthorNames(authorNamesMap);
+        } catch (error) {
+          console.error("Error obteniendo nombres de autores de comentarios:", error);
+          // No fallar completamente si hay error obteniendo nombres
+          setCommentAuthorNames({});
+        }
+      }
+      
       setHasLoadedComments(true);
     } catch (error) {
       console.error("Error cargando comentarios:", error);
@@ -208,24 +284,36 @@ export function ProjectCard(props: ProjectCardProps) {
     return (
       <Card key={comment._id} className="bg-gray-800 border border-gray-700 mb-3">
         <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-sm">
-            <Avatar className="w-6 h-6">
-              <AvatarImage
-                src={comment.authorAvatar || "/pngs/avatar.png"}
-                alt={`Avatar de ${comment.author}`}
-              />
-              <AvatarFallback>
-                {comment.author
-                  ? comment.author.substring(0, 2).toUpperCase()
-                  : "CN"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-col">
-              <span className="text-blue-400 text-xs">{comment.author}</span>
-              <span className="text-gray-400 text-xs">
-                {fechaFormateada}
-              </span>
+          <CardTitle className="flex justify-between items-center text-sm">
+            <div className="flex items-center gap-2">
+              <Avatar className="w-6 h-6">
+                <AvatarImage
+                  src={comment.authorAvatar || "/pngs/avatar.png"}
+                  alt={`Avatar de ${comment.author}`}
+                />
+                <AvatarFallback>
+                  {comment.author
+                    ? comment.author.substring(0, 2).toUpperCase()
+                    : "CN"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col">
+                <span className="text-blue-400 text-xs">{commentAuthorNames[comment.authorID || comment.author] || comment.author}</span>
+                <span className="text-gray-400 text-xs">{fechaFormateada}</span>
+              </div>
             </div>
+
+            {user?.role === "admin" && (
+              <DeleteCommentButton
+                commentId={comment._id}
+                adminId={user.id}
+                onDeleted={() =>
+                  setComments((prev) =>
+                    prev.filter((c) => c._id !== comment._id)
+                  )
+                }
+              />
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
@@ -266,15 +354,23 @@ export function ProjectCard(props: ProjectCardProps) {
                 </span>
               )}
               <Avatar className="w-8 h-8">
-                <AvatarImage src={avatarURL} alt={`Avatar de ${username}`} />
+                <AvatarImage src={avatarURL} alt={`Avatar de ${authorNames[0] || "Desconocido"}`} />
                 <AvatarFallback>
-                  {username ? username.substring(0, 2).toUpperCase() : "CN"}
+                  {authorNames[0] ? authorNames[0].substring(0, 2).toUpperCase() : "CN"}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-col">
                 <h1 className="text-blue-400 mb-1">{title}</h1>
                 <h2 className="text-gray-400 font-light">
-                  @{username} · {localStarCount} Estrellas
+                  {authorNames.map((name, idx) => (
+                    <Link 
+                      key={idx} 
+                      href={`/Perfil?userId=${authors[idx]}`}
+                      className="hover:text-blue-400 transition-colors cursor-pointer"
+                    >
+                      @{name}{idx < authorNames.length - 1 ? ", " : ""}
+                    </Link>
+                  ))}
                 </h2>
               </div>
             </div>
