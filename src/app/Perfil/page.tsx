@@ -1,12 +1,46 @@
-import type { Metadata } from "next";
+"use client";
 
-export const metadata: Metadata = {
-  title: "Mi Perfil - Red Networking",
-  description: "Gestiona tu perfil en Red Networking",
-  icons: {
-    icon: "/favicon.svg",
-  },
-};
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import { useAuthenticatedRequest } from "@/hooks/useAuthenticatedRequest";
+import axios from "axios";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import DashboardLayout from "@/components/layout/DashboardLayout";
+
+// Tipos
+interface UserProfile {
+  _id: string;
+  name: string;
+  email: string;
+  bio: string;
+  location: string;
+  website: string;
+  github: string;
+  createdAt: string;
+  role?: string;
+}
+
+interface UserStats {
+  projectsCreated: number;
+  projectsLiked: number;
+  totalViews: number;
+  averageRating: number;
+  memberSince: string;
+}
+
+interface UserProject {
+  _id: string;
+  title: string;
+  description: string;
+  tools: string[];
+  views: number;
+  stars: number;
+  rating: number;
+  repositoryLink: string;
+}
 
 export default function Perfil() {
   const { user, isAuthenticated } = useAuth();
