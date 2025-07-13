@@ -83,9 +83,17 @@ const MyProyects = () => {
     fetchProjects();
   };
 
+  // Debug logs
+  console.log('MyProyects - isAuthenticated:', isAuthenticated);
+  console.log('MyProyects - user:', user);
+  console.log('MyProyects - token:', token);
+  console.log('MyProyects - projects:', projects);
+  console.log('MyProyects - isLoading:', isLoading);
+  console.log('MyProyects - error:', error);
+
   // Don't render anything if not authenticated
   if (!isAuthenticated) {
-    return null;
+    return <div className="text-gray-400 text-sm">No autenticado</div>;
   }
 
   return (

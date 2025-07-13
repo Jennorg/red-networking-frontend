@@ -85,9 +85,17 @@ const MyFavorites = () => {
     fetchFavorites();
   };
 
+  // Debug logs
+  console.log('MyFavorites - isAuthenticated:', isAuthenticated);
+  console.log('MyFavorites - user:', user);
+  console.log('MyFavorites - token:', token);
+  console.log('MyFavorites - favorites:', favorites);
+  console.log('MyFavorites - isLoading:', isLoading);
+  console.log('MyFavorites - error:', error);
+
   // Don't render anything if not authenticated
   if (!isAuthenticated) {
-    return null;
+    return <div className="text-gray-400 text-sm">No autenticado</div>;
   }
 
   return (

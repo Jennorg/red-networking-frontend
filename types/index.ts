@@ -12,3 +12,11 @@ export type Project = {
   comments: string[];
   date: string;
 };
+
+export type Rating = {
+  _id: string;
+  projectID: string;
+  teacherID: string;
+  score: number;
+  feedback: string;
+};
