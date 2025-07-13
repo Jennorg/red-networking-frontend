@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Eye, Star, MessageCircleMore, Heart, Loader2 } from "lucide-react";
 import { LanguageIcon } from "../misc/LanguageIcon";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import axios from "axios";
@@ -87,6 +88,29 @@ export function ProjectCard(props: ProjectCardProps) {
   const [newComment, setNewComment] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [localStarCount, setLocalStarCount] = useState(stars || 0);
+  const [authorNames, setAuthorNames] = useState<string[]>([]);
+
+  useEffect(() => {
+    // Obtener nombres de autores desde el backend
+    async function fetchAuthorNames() {
+      if (!authors || authors.length === 0) {
+        setAuthorNames(["Desconocido"]);
+        return;
+      }
+      try {
+        const res = await axios.get("https://red-networking-backend.vercel.app/auth/users");
+        const users = res.data.users || [];
+        const names = authors.map((id) => {
+          const user = users.find((u: any) => u._id === id);
+          return user ? user.name : "Usuario desconocido";
+        });
+        setAuthorNames(names);
+      } catch {
+        setAuthorNames(["Desconocido"]);
+      }
+    }
+    fetchAuthorNames();
+  }, [authors]);
 
   const fetchComments = useCallback(async () => {
     if (!showComments || hasLoadedComments) return; // No cargar si ya están cargados
@@ -266,15 +290,23 @@ export function ProjectCard(props: ProjectCardProps) {
                 </span>
               )}
               <Avatar className="w-8 h-8">
-                <AvatarImage src={avatarURL} alt={`Avatar de ${username}`} />
+                <AvatarImage src={avatarURL} alt={`Avatar de ${authorNames[0] || "Desconocido"}`} />
                 <AvatarFallback>
-                  {username ? username.substring(0, 2).toUpperCase() : "CN"}
+                  {authorNames[0] ? authorNames[0].substring(0, 2).toUpperCase() : "CN"}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-col">
                 <h1 className="text-blue-400 mb-1">{title}</h1>
                 <h2 className="text-gray-400 font-light">
-                  @{username} · {localStarCount} Estrellas
+                  {authorNames.map((name, idx) => (
+                    <Link 
+                      key={idx} 
+                      href={`/Perfil?userId=${authors[idx]}`}
+                      className="hover:text-blue-400 transition-colors cursor-pointer"
+                    >
+                      @{name}{idx < authorNames.length - 1 ? ", " : ""}
+                    </Link>
+                  ))}
                 </h2>
               </div>
             </div>

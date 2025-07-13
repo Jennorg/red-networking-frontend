@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAuthenticatedRequest } from "@/hooks/useAuthenticatedRequest";
@@ -71,6 +71,8 @@ export default function Perfil() {
   const { user, isAuthenticated } = useAuth();
   const { get, put } = useAuthenticatedRequest();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const targetUserId = searchParams.get('userId');
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -88,47 +90,62 @@ export default function Perfil() {
     role: ''
   });
 
+  // Determinar qué usuario mostrar
+  const userIdToShow = targetUserId || user?.id;
+  const isOwnProfile = !targetUserId || targetUserId === user?.id;
+
   // Cargar datos del perfil usando endpoints existentes
   const loadProfileData = async () => {
-    if (!user?.id) return;
+    if (!userIdToShow) return;
     
+    console.log('Loading profile data for userId:', userIdToShow);
     setIsLoading(true);
     try {
       // Obtener datos del usuario usando el endpoint correcto
-      const userResponse = await axios.get(`https://red-networking-backend.vercel.app/api/getUser/${user.id}`);
-      const userData = userResponse.data;
+      const userResponse = await axios.get(`https://red-networking-backend.vercel.app/api/getUser/${userIdToShow}`);
+      console.log('User response:', userResponse.data);
+      const userData = userResponse.data.user || userResponse.data; // Acceder al objeto 'user' dentro de la respuesta
+      console.log('Processed userData:', userData);
+      console.log('User role from database:', userData?.role || userData?.rol);
       
       if (userData) {
         setUserProfile({
-          _id: userData._id || user.id,
-          name: userData.name || user.name || '',
-          email: userData.email || user.email || '',
+          _id: userData._id || userIdToShow,
+          name: userData.name || '',
+          email: userData.email || '',
           bio: userData.bio || '',
           location: userData.location || '',
           website: userData.website || '',
           github: userData.github || '',
           createdAt: userData.createdAt || new Date().toISOString(),
-          role: userData.role || 'estudiante'
+          role: userData.role || userData.rol || 'estudiante' // Intentar ambos campos de rol
         });
       } else {
-        // Usar datos del contexto como fallback
-        setUserProfile({
-          _id: user.id,
-          name: user.name || '',
-          email: user.email || '',
-          bio: '',
-          location: '',
-          website: '',
-          github: '',
-          createdAt: new Date().toISOString(),
-          role: 'estudiante'
-        });
+        console.log('No userData found, isOwnProfile:', isOwnProfile);
+        // Usar datos del contexto como fallback solo si es el propio perfil
+        if (isOwnProfile) {
+          setUserProfile({
+            _id: user?.id || '',
+            name: user?.name || '',
+            email: user?.email || '',
+            bio: '',
+            location: '',
+            website: '',
+            github: '',
+            createdAt: new Date().toISOString(),
+            role: user?.role || 'estudiante' // Usar el rol del contexto de autenticación
+          });
+        } else {
+          setUserProfile(null);
+        }
       }
       
       // Obtener proyectos del usuario usando el endpoint correcto
       let userProjects = [];
       try {
-        const projectsResponse = await axios.get(`https://red-networking-backend.vercel.app/api/usuario_projects/${user.id}`);
+        console.log('Fetching projects for userId:', userIdToShow);
+        const projectsResponse = await axios.get(`https://red-networking-backend.vercel.app/api/usuario_projects/${userIdToShow}`);
+        console.log('Projects response:', projectsResponse.data);
         let rawData = projectsResponse.data;
         
         // Manejar diferentes estructuras de respuesta
@@ -151,9 +168,9 @@ export default function Perfil() {
           const allProjectsResponse = await axios.get('https://red-networking-backend.vercel.app/api/pagina_principal');
           const allProjectsData = allProjectsResponse.data?.data?.data || allProjectsResponse.data?.data || allProjectsResponse.data?.proyectos || allProjectsResponse.data || [];
           
-          // Filtrar proyectos del usuario actual
+          // Filtrar proyectos del usuario objetivo
           userProjects = allProjectsData.filter((project: any) => 
-            project.authors && project.authors.includes(user.id)
+            project.authors && project.authors.includes(userIdToShow)
           );
         }
         
@@ -181,7 +198,7 @@ export default function Perfil() {
           const allProjectsData = allProjectsResponse.data?.data?.data || allProjectsResponse.data?.data || allProjectsResponse.data?.proyectos || allProjectsResponse.data || [];
           
           userProjects = allProjectsData.filter((project: any) => 
-            project.authors && project.authors.includes(user.id)
+            project.authors && project.authors.includes(userIdToShow)
           );
           
           // Asegurar que userProjects sea un array antes de hacer map
@@ -217,32 +234,38 @@ export default function Perfil() {
         memberSince: new Date().getFullYear().toString()
       });
       
-      // Actualizar formulario de edición
-      setEditForm({
-        name: userData?.name || user.name || '',
-        email: userData?.email || user.email || '',
-        bio: userData?.bio || '',
-        location: userData?.location || '',
-        website: userData?.website || '',
-        github: userData?.github || '',
-        role: userData?.role || 'estudiante'
-      });
+      // Actualizar formulario de edición solo si es el propio perfil
+      if (isOwnProfile) {
+        setEditForm({
+          name: userData?.name || user?.name || '',
+          email: userData?.email || user?.email || '',
+          bio: userData?.bio || '',
+          location: userData?.location || '',
+          website: userData?.website || '',
+          github: userData?.github || '',
+          role: userData?.role || userData?.rol || user?.role || 'estudiante'
+        });
+      }
       
     } catch (error) {
       console.error('Error cargando datos del perfil:', error);
       toast.error('Error al cargar los datos del perfil');
       
-      // Usar datos del contexto como fallback
-      setUserProfile({
-        _id: user.id,
-        name: user.name || '',
-        email: user.email || '',
-        bio: '',
-        location: '',
-        website: '',
-        github: '',
-        createdAt: new Date().toISOString()
-      });
+      // Usar datos del contexto como fallback solo si es el propio perfil
+      if (isOwnProfile) {
+        setUserProfile({
+          _id: user?.id || '',
+          name: user?.name || '',
+          email: user?.email || '',
+          bio: '',
+          location: '',
+          website: '',
+          github: '',
+          createdAt: new Date().toISOString()
+        });
+      } else {
+        setUserProfile(null);
+      }
       
       setUserStats({
         projectsCreated: 0,
@@ -259,10 +282,10 @@ export default function Perfil() {
   };
 
   useEffect(() => {
-    if (isAuthenticated && user?.id) {
+    if (userIdToShow) {
       loadProfileData();
     }
-  }, [isAuthenticated, user?.id]);
+  }, [userIdToShow]);
 
   // Obtener ratings reales de los proyectos
   useEffect(() => {
@@ -347,6 +370,7 @@ export default function Perfil() {
   };
 
   const getRoleBadge = (role: string) => {
+    console.log('Role from database:', role); // Debug log
     switch (role?.toLowerCase()) {
       case 'admin':
         return (
@@ -372,7 +396,7 @@ export default function Perfil() {
     }
   };
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !targetUserId) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
@@ -392,6 +416,19 @@ export default function Perfil() {
           <div className="text-center">
             <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-4" />
             <p className="text-gray-400">Cargando perfil...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!userProfile) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-300 mb-4">Usuario no encontrado</h2>
+            <p className="text-gray-400">El perfil que buscas no existe o no está disponible</p>
           </div>
         </div>
       </DashboardLayout>
@@ -446,12 +483,12 @@ export default function Perfil() {
 
             {/* Botones de Acción */}
             <div className="flex gap-2 ml-auto">
-              {!isEditing ? (
+              {isOwnProfile && !isEditing ? (
                 <Button onClick={handleEdit} variant="outline" className="gap-2">
                   <Edit className="w-4 h-4" />
                   Editar Perfil
                 </Button>
-              ) : (
+              ) : isOwnProfile && isEditing ? (
                 <div className="flex gap-2">
                   <Button onClick={handleSave} disabled={isSaving} className="gap-2">
                     {isSaving ? (
@@ -466,7 +503,7 @@ export default function Perfil() {
                     Cancelar
                   </Button>
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
         </div>
@@ -602,7 +639,7 @@ export default function Perfil() {
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2">
                   <Code className="w-5 h-5" />
-                  Mis Proyectos
+                  {isOwnProfile ? 'Mis Proyectos' : 'Proyectos'}
                 </CardTitle>
                 <CardDescription className="text-gray-400">
                   {userProjects.length} proyectos creados
