@@ -40,7 +40,7 @@ const AddProjectButton = () => {
 
           {/* Contenedor con scroll vertical */}
           <div className="overflow-y-auto px-6 py-4" style={{ maxHeight: "calc(90vh - 64px)" }}>
-            <ProjectUploadForm />
+            <ProjectUploadForm onSuccess={() => setOpen(false)} />
           </div>
         </div>
       </DialogContent>
