@@ -1,5 +1,15 @@
 "use client";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Registrarse - Red Networking",
+  description: "Crea tu cuenta en Red Networking",
+  icons: {
+    icon: "/favicon.svg",
+  },
+};
+
 import {
   Form,
   FormControl,
