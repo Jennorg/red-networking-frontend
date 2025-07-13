@@ -13,6 +13,7 @@ export const metadata: Metadata = {
 };
 import {Toaster} from "@/components/ui/sonner";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { Providers } from "../../providers/providers";
 
 export default function RootLayout({
   children,
@@ -23,11 +24,9 @@ export default function RootLayout({
     <html lang="es">
       <body suppressHydrationWarning>
         <Toaster richColors position="top-right" />
-        
-        <AuthProvider>
-          {children}
-        </AuthProvider>
-      
+        <Providers>
+          <AuthProvider>{children}</AuthProvider>
+        </Providers>
       </body>
     </html>
   );

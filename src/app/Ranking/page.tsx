@@ -16,65 +16,34 @@ import { ProjectCategorySelector } from "@/components/misc/ProjectCategorySelect
 import { SmartPagination } from "@/components/ui/smart-pagination";
 
 export default function Ranking() {
+  const [rankingData, setRankingData] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); 
+
+  const totalPages = 1; 
   
-  const totalPages = 3;
-  const mockData = [
-    {
-      _id: "ranking-1",
-      title: "Ecuanutrition",
-      authors: ["EdwardG"],
-      date: "2024-01-01",
-      tags: ["web", "management"],
-      description: "Plataforma de gestión para productos del mar y camarones, con sistema de inventario y ventas.",
-      repositoryLink: "#",
-      tools: ["React", "Node.js"],
-      image: "",
-      document: "",
-      __v: 0,
-      position: 1,
-      avatarURL: "avatar.png",
-      stars: 120,
-      views: 200
-    },
-    {
-      _id: "ranking-2",
-      title: "Ecuanutrition",
-      authors: ["EdwardG"],
-      date: "2024-01-01",
-      tags: ["web", "management"],
-      description: "Plataforma de gestión para productos del mar y camarones, con sistema de inventario y ventas.",
-      repositoryLink: "#",
-      tools: ["React", "Node.js"],
-      image: "",
-      document: "",
-      __v: 0,
-      position: 2,
-      avatarURL: "avatar.png",
-      stars: 120,
-      views: 200
-    },
-    {
-      _id: "ranking-3",
-      title: "Ecuanutrition",
-      authors: ["EdwardG"],
-      date: "2024-01-01",
-      tags: ["web", "management"],
-      description: "Plataforma de gestión para productos del mar y camarones, con sistema de inventario y ventas.",
-      repositoryLink: "#",
-      tools: ["React", "Node.js"],
-      image: "",
-      document: "",
-      __v: 0,
-      position: 3,
-      avatarURL: "avatar.png",
-      stars: 120,
-      views: 200
-    }
-  ];
+  useEffect(() => {
+    const fetchRanking = async () => {
+      try {
+        const response = await axios.get("https://red-networking-backend.vercel.app/api/ranking");
+        const resultado = response.data;
 
+        if (resultado.proceso) {
+          setRankingData(resultado.data);
+        } else {
+          console.error("Error al obtener ranking:", resultado.message);
+        }
+      } catch (error) {
+        console.error("Error al conectar con el backend:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
+    fetchRanking();
+  }, []);
+
+ 
 
   const handlePageChange = (page: number) => {
     // Validate page number before changing
@@ -107,12 +76,19 @@ export default function Ranking() {
         </div>
 
           <div className="flex flex-col gap-2 sm:gap-5">
-            {mockData.map((project, index) => (
-              <ProjectCard
-                key={`${project._id}-${index}`}
-                {...project}
-              />
-            ))}
+            {isLoading ? (
+              <p className="text-white text-center">Cargando ranking...</p>
+            ) : rankingData.length > 0 ? (
+              rankingData.map((project: any, index: number) => (
+                <ProjectCard
+                  key={`${project._id}-${index}`}
+                  {...project}
+                  position={index + 1}
+                />
+              ))
+            ) : (
+              <p className="text-white text-center">No hay proyectos en el ranking.</p>
+            )}
           </div>
 
           <div>

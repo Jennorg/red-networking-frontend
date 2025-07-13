@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import axios from "axios";
 import { API_ENDPOINTS } from "@/config/env";
 import Star from '/public/icons/star.svg';
@@ -84,18 +85,29 @@ const MyFavorites = () => {
     fetchFavorites();
   };
 
+  // Debug logs
+  console.log('MyFavorites - isAuthenticated:', isAuthenticated);
+  console.log('MyFavorites - user:', user);
+  console.log('MyFavorites - token:', token);
+  console.log('MyFavorites - favorites:', favorites);
+  console.log('MyFavorites - isLoading:', isLoading);
+  console.log('MyFavorites - error:', error);
+
   // Don't render anything if not authenticated
   if (!isAuthenticated) {
-    return null;
+    return <div className="text-gray-400 text-sm">No autenticado</div>;
   }
 
   return (
     <div className="mt-3">
       <div className="flex gap-1 w-full mb-3 items-center justify-between">
-        <div className="flex gap-1 items-center">
+        <Link 
+          href="/Perfil" 
+          className="flex gap-1 items-center hover:text-blue-400 transition-colors cursor-pointer"
+        >
           <Star className="fill-amber-400"/>
           <h2 className="text-xl font-semibold">Favoritos</h2>
-        </div>
+        </Link>
         <button
           onClick={handleRefresh}
           disabled={isLoading}

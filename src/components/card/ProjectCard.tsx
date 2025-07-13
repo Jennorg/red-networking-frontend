@@ -86,6 +86,7 @@ export function ProjectCard(props: ProjectCardProps) {
   const [showCommentInput, setShowCommentInput] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [localStarCount, setLocalStarCount] = useState(stars || 0);
 
   const fetchComments = useCallback(async () => {
     if (!showComments || hasLoadedComments) return; // No cargar si ya están cargados
@@ -122,6 +123,11 @@ export function ProjectCard(props: ProjectCardProps) {
       setHasLoadedComments(false);
     }
   }, [showComments, _id, fetchComments]);
+
+  // Sincronizar el contador local cuando cambien las props de stars
+  useEffect(() => {
+    setLocalStarCount(stars || 0);
+  }, [stars]);
 
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
@@ -170,6 +176,23 @@ export function ProjectCard(props: ProjectCardProps) {
     } catch (error) {
       console.error("Error al dar like:", error);
     }
+  };
+
+  // Función para manejar el toggle de favorito con actualización inmediata del contador
+  const handleToggleFavorite = () => {
+    if (!onToggleFavorite) return;
+    
+    // Actualizar inmediatamente el contador local
+    if (isFavorited) {
+      // Si está favorito, al hacer clic lo quitamos, entonces restamos 1
+      setLocalStarCount(prev => Math.max(0, prev - 1));
+    } else {
+      // Si no está favorito, al hacer clic lo agregamos, entonces sumamos 1
+      setLocalStarCount(prev => prev + 1);
+    }
+    
+    // Llamar a la función original
+    onToggleFavorite();
   };
 
   const renderComment = (comment: Comment) => {
@@ -251,14 +274,14 @@ export function ProjectCard(props: ProjectCardProps) {
               <div className="flex-col">
                 <h1 className="text-blue-400 mb-1">{title}</h1>
                 <h2 className="text-gray-400 font-light">
-                  @{username} · {(typeof stars !== 'undefined' ? stars : props.favoritos) ?? 0} Estrellas
+                  @{username} · {localStarCount} Estrellas
                 </h2>
               </div>
             </div>
 
             <div className="flex gap-2">
               <button
-                onClick={onToggleFavorite}
+                onClick={handleToggleFavorite}
                 disabled={isFavoriteLoading}
                 className="flex items-center gap-1 hover:scale-110 transition-transform disabled:opacity-50"
               >
@@ -273,7 +296,7 @@ export function ProjectCard(props: ProjectCardProps) {
                     }`} 
                   />
                 )}
-                <p className="font-light"> {stars}</p>
+                <p className="font-light"> {localStarCount}</p>
               </button>
               {views > 0 && (
                 <>

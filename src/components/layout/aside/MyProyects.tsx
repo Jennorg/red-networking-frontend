@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import axios from "axios";
 import { API_ENDPOINTS } from "@/config/env";
 import Folder from '/public/icons/folder.svg';
@@ -82,18 +83,29 @@ const MyProyects = () => {
     fetchProjects();
   };
 
+  // Debug logs
+  console.log('MyProyects - isAuthenticated:', isAuthenticated);
+  console.log('MyProyects - user:', user);
+  console.log('MyProyects - token:', token);
+  console.log('MyProyects - projects:', projects);
+  console.log('MyProyects - isLoading:', isLoading);
+  console.log('MyProyects - error:', error);
+
   // Don't render anything if not authenticated
   if (!isAuthenticated) {
-    return null;
+    return <div className="text-gray-400 text-sm">No autenticado</div>;
   }
 
   return (
     <div>
       <div className="flex gap-1 w-full mb-3 items-center justify-between">
-        <div className="flex gap-1 items-center">
+        <Link 
+          href="/Perfil" 
+          className="flex gap-1 items-center hover:text-green-400 transition-colors cursor-pointer"
+        >
           <Folder className="fill-amber-400"/>
           <h2 className="text-xl font-semibold">Tus Proyectos</h2>
-        </div>
+        </Link>
         <button
           onClick={handleRefresh}
           disabled={isLoading}
