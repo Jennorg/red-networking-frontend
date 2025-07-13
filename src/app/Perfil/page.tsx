@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAuthenticatedRequest } from "@/hooks/useAuthenticatedRequest";
@@ -59,7 +59,6 @@ interface UserProfile {
   name: string;
   email: string;
   bio?: string;
-  location?: string;
   website?: string;
   github?: string;
   avatar?: string;
@@ -71,6 +70,8 @@ export default function Perfil() {
   const { user, isAuthenticated } = useAuth();
   const { get, put } = useAuthenticatedRequest();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const targetUserId = searchParams.get('userId');
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -82,53 +83,94 @@ export default function Perfil() {
     name: '',
     email: '',
     bio: '',
-    location: '',
     website: '',
     github: '',
     role: ''
   });
 
+  // Determinar qué usuario mostrar
+  const userIdToShow = targetUserId || user?.id;
+  const isOwnProfile = !targetUserId || targetUserId === user?.id;
+
   // Cargar datos del perfil usando endpoints existentes
   const loadProfileData = async () => {
-    if (!user?.id) return;
+    if (!userIdToShow) return;
     
+    console.log('Loading profile data for userId:', userIdToShow);
     setIsLoading(true);
     try {
       // Obtener datos del usuario usando el endpoint correcto
-      const userResponse = await axios.get(`https://red-networking-backend.vercel.app/api/getUser/${user.id}`);
-      const userData = userResponse.data;
+      const userResponse = await axios.get(`https://red-networking-backend.vercel.app/api/getUser/${userIdToShow}`);
+      console.log('User response:', userResponse.data);
+      const userData = userResponse.data.user || userResponse.data; // Acceder al objeto 'user' dentro de la respuesta
+      console.log('Processed userData:', userData);
+      console.log('User role from database:', userData?.role || userData?.rol);
+      console.log('GitHub data from database:', userData?.github);
+      console.log('Website data from database:', userData?.website);
+      console.log('User links array:', userData?.links);
+      console.log('User bio from database:', userData?.bio);
       
       if (userData) {
+        // Extraer GitHub y Website del array de links si existe
+        let githubLink = '';
+        let websiteLink = '';
+        
+        if (userData.links && Array.isArray(userData.links)) {
+          // Extraer sitio web (posición 0)
+          if (userData.links[0] && userData.links[0] !== '') {
+            websiteLink = userData.links[0];
+          }
+          
+          // Extraer GitHub (posición 1 o construir desde posición 2)
+          const githubLinkItem = userData.links.find((link: string) => 
+            link && (link.includes('github.com') || link.startsWith('https://github.com'))
+          );
+          if (githubLinkItem) {
+            githubLink = githubLinkItem;
+          } else if (userData.links[2] && userData.links[2] !== '') {
+            // Si no hay link de GitHub pero hay un username en la posición 2
+            githubLink = `https://github.com/${userData.links[2]}`;
+          }
+        }
+        
+        console.log('Processed GitHub link:', githubLink);
+        console.log('Processed Website link:', websiteLink);
+        
         setUserProfile({
-          _id: userData._id || user.id,
-          name: userData.name || user.name || '',
-          email: userData.email || user.email || '',
+          _id: userData._id || userIdToShow,
+          name: userData.name || '',
+          email: userData.email || '',
           bio: userData.bio || '',
-          location: userData.location || '',
-          website: userData.website || '',
-          github: userData.github || '',
+          website: websiteLink,
+          github: githubLink,
           createdAt: userData.createdAt || new Date().toISOString(),
-          role: userData.role || 'estudiante'
+          role: userData.role || userData.rol || 'estudiante' // Intentar ambos campos de rol
         });
       } else {
-        // Usar datos del contexto como fallback
-        setUserProfile({
-          _id: user.id,
-          name: user.name || '',
-          email: user.email || '',
+        console.log('No userData found, isOwnProfile:', isOwnProfile);
+        // Usar datos del contexto como fallback solo si es el propio perfil
+        if (isOwnProfile) {
+                  setUserProfile({
+          _id: user?.id || '',
+          name: user?.name || '',
+          email: user?.email || '',
           bio: '',
-          location: '',
           website: '',
           github: '',
           createdAt: new Date().toISOString(),
-          role: 'estudiante'
+          role: user?.role || 'estudiante' // Usar el rol del contexto de autenticación
         });
+        } else {
+          setUserProfile(null);
+        }
       }
       
       // Obtener proyectos del usuario usando el endpoint correcto
       let userProjects = [];
       try {
-        const projectsResponse = await axios.get(`https://red-networking-backend.vercel.app/api/usuario_projects/${user.id}`);
+        console.log('Fetching projects for userId:', userIdToShow);
+        const projectsResponse = await axios.get(`https://red-networking-backend.vercel.app/api/usuario_projects/${userIdToShow}`);
+        console.log('Projects response:', projectsResponse.data);
         let rawData = projectsResponse.data;
         
         // Manejar diferentes estructuras de respuesta
@@ -151,9 +193,9 @@ export default function Perfil() {
           const allProjectsResponse = await axios.get('https://red-networking-backend.vercel.app/api/pagina_principal');
           const allProjectsData = allProjectsResponse.data?.data?.data || allProjectsResponse.data?.data || allProjectsResponse.data?.proyectos || allProjectsResponse.data || [];
           
-          // Filtrar proyectos del usuario actual
+          // Filtrar proyectos del usuario objetivo
           userProjects = allProjectsData.filter((project: any) => 
-            project.authors && project.authors.includes(user.id)
+            project.authors && project.authors.includes(userIdToShow)
           );
         }
         
@@ -181,7 +223,7 @@ export default function Perfil() {
           const allProjectsData = allProjectsResponse.data?.data?.data || allProjectsResponse.data?.data || allProjectsResponse.data?.proyectos || allProjectsResponse.data || [];
           
           userProjects = allProjectsData.filter((project: any) => 
-            project.authors && project.authors.includes(user.id)
+            project.authors && project.authors.includes(userIdToShow)
           );
           
           // Asegurar que userProjects sea un array antes de hacer map
@@ -217,32 +259,58 @@ export default function Perfil() {
         memberSince: new Date().getFullYear().toString()
       });
       
-      // Actualizar formulario de edición
-      setEditForm({
-        name: userData?.name || user.name || '',
-        email: userData?.email || user.email || '',
-        bio: userData?.bio || '',
-        location: userData?.location || '',
-        website: userData?.website || '',
-        github: userData?.github || '',
-        role: userData?.role || 'estudiante'
-      });
+      // Actualizar formulario de edición solo si es el propio perfil
+      if (isOwnProfile) {
+        // Extraer GitHub y Website del array de links si existe
+        let githubLink = '';
+        let websiteLink = '';
+        
+        if (userData?.links && Array.isArray(userData.links)) {
+          // Extraer sitio web (posición 0)
+          if (userData.links[0] && userData.links[0] !== '') {
+            websiteLink = userData.links[0];
+          }
+          
+          // Extraer GitHub (posición 1 o construir desde posición 2)
+          const githubLinkItem = userData.links.find((link: string) => 
+            link && (link.includes('github.com') || link.startsWith('https://github.com'))
+          );
+          if (githubLinkItem) {
+            githubLink = githubLinkItem;
+          } else if (userData.links[2] && userData.links[2] !== '') {
+            // Si no hay link de GitHub pero hay un username en la posición 2
+            githubLink = `https://github.com/${userData.links[2]}`;
+          }
+        }
+        
+        setEditForm({
+          name: userData?.name || user?.name || '',
+          email: userData?.email || user?.email || '',
+          bio: userData?.bio || '',
+          website: websiteLink,
+          github: githubLink,
+          role: userData?.role || userData?.rol || user?.role || 'estudiante'
+        });
+      }
       
     } catch (error) {
       console.error('Error cargando datos del perfil:', error);
       toast.error('Error al cargar los datos del perfil');
       
-      // Usar datos del contexto como fallback
-      setUserProfile({
-        _id: user.id,
-        name: user.name || '',
-        email: user.email || '',
-        bio: '',
-        location: '',
-        website: '',
-        github: '',
-        createdAt: new Date().toISOString()
-      });
+      // Usar datos del contexto como fallback solo si es el propio perfil
+      if (isOwnProfile) {
+        setUserProfile({
+          _id: user?.id || '',
+          name: user?.name || '',
+          email: user?.email || '',
+          bio: '',
+          website: '',
+          github: '',
+          createdAt: new Date().toISOString()
+        });
+      } else {
+        setUserProfile(null);
+      }
       
       setUserStats({
         projectsCreated: 0,
@@ -259,10 +327,10 @@ export default function Perfil() {
   };
 
   useEffect(() => {
-    if (isAuthenticated && user?.id) {
+    if (userIdToShow) {
       loadProfileData();
     }
-  }, [isAuthenticated, user?.id]);
+  }, [userIdToShow]);
 
   // Obtener ratings reales de los proyectos
   useEffect(() => {
@@ -300,38 +368,105 @@ export default function Perfil() {
     
     setIsSaving(true);
     try {
-      // Por ahora, solo actualizar el estado local
-      // En el futuro, cuando tengas endpoints de perfil, aquí iría la llamada al backend
-      setUserProfile(prev => prev ? {
-        ...prev,
-        name: editForm.name,
-        email: editForm.email,
-        bio: editForm.bio,
-        location: editForm.location,
-        website: editForm.website,
-        github: editForm.github
-      } : null);
+      console.log('Saving profile with data:', {
+        userId: user.id,
+        formData: editForm
+      });
       
-      toast.success('Perfil actualizado correctamente');
-      setIsEditing(false);
-    } catch (error) {
+      // Preparar los datos para el backend
+      // El backend espera los links en un array: [website, github_url, github_username]
+      let links = ['', '', ''];
+      
+      // Sitio web en posición 0
+      links[0] = editForm.website || '';
+      
+      // Extraer el username de GitHub si es una URL completa
+      let githubUsername = '';
+      if (editForm.github) {
+        if (editForm.github.includes('github.com/')) {
+          githubUsername = editForm.github.split('github.com/')[1];
+        } else {
+          githubUsername = editForm.github;
+        }
+      }
+      
+      links[1] = editForm.github || ''; // URL completa de GitHub
+      links[2] = githubUsername; // Username de GitHub
+      
+      console.log('Prepared links array for backend:', links);
+      
+      // Llamada al endpoint para actualizar el perfil
+      const response = await axios.put(
+        `https://red-networking-backend.vercel.app/api/users/${user.id}/profile`,
+        {
+          name: editForm.name,
+          email: editForm.email,
+          bio: editForm.bio,
+          website: editForm.website,
+          links: links,
+          role: editForm.role
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      console.log('Profile update response:', response.data);
+
+      if (response.data.ok) {
+        // Actualizar el estado local con los datos actualizados
+        setUserProfile(prev => prev ? {
+          ...prev,
+          name: editForm.name,
+          email: editForm.email,
+          bio: editForm.bio,
+          website: editForm.website,
+          github: editForm.github, // Mantener el valor del formulario
+          role: editForm.role
+        } : null);
+        
+        console.log('Profile updated successfully, new data:', {
+          name: editForm.name,
+          email: editForm.email,
+          bio: editForm.bio,
+          website: editForm.website,
+          github: editForm.github,
+          role: editForm.role
+        });
+        
+        toast.success('Perfil actualizado correctamente');
+        setIsEditing(false);
+        
+        // Recargar los datos del perfil para asegurar que se muestren los datos actualizados
+        setTimeout(() => {
+          loadProfileData();
+        }, 1000);
+      } else {
+        console.error('Profile update failed:', response.data);
+        toast.error(response.data.error || 'Error al actualizar el perfil');
+      }
+    } catch (error: any) {
       console.error('Error actualizando perfil:', error);
-      toast.error('Error al actualizar el perfil');
+      console.error('Error response:', error.response?.data);
+      const errorMessage = error.response?.data?.error || 'Error al actualizar el perfil';
+      toast.error(errorMessage);
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleCancel = () => {
-    setEditForm({
-      name: userProfile?.name || '',
-      email: userProfile?.email || '',
-      bio: userProfile?.bio || '',
-      location: userProfile?.location || '',
-      website: userProfile?.website || '',
-      github: userProfile?.github || '',
-      role: userProfile?.role || 'estudiante'
-    });
+            setEditForm({
+          name: userProfile?.name || '',
+          email: userProfile?.email || '',
+          bio: userProfile?.bio || '',
+          website: userProfile?.website || '',
+          github: userProfile?.github || '',
+          role: userProfile?.role || 'estudiante'
+        });
     setIsEditing(false);
   };
 
@@ -347,6 +482,7 @@ export default function Perfil() {
   };
 
   const getRoleBadge = (role: string) => {
+    console.log('Role from database:', role); // Debug log
     switch (role?.toLowerCase()) {
       case 'admin':
         return (
@@ -372,7 +508,7 @@ export default function Perfil() {
     }
   };
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !targetUserId) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
@@ -392,6 +528,19 @@ export default function Perfil() {
           <div className="text-center">
             <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-4" />
             <p className="text-gray-400">Cargando perfil...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!userProfile) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-300 mb-4">Usuario no encontrado</h2>
+            <p className="text-gray-400">El perfil que buscas no existe o no está disponible</p>
           </div>
         </div>
       </DashboardLayout>
@@ -425,7 +574,7 @@ export default function Perfil() {
                   {/* Botón de GitHub */}
                   {userProfile?.github && (
                     <a
-                      href={`https://github.com/${userProfile.github}`}
+                      href={userProfile.github.startsWith('http') ? userProfile.github : `https://github.com/${userProfile.github}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="ml-2 inline-flex items-center justify-center rounded-full bg-gray-800 hover:bg-gray-700 text-white w-9 h-9 transition-colors border border-gray-700"
@@ -446,12 +595,12 @@ export default function Perfil() {
 
             {/* Botones de Acción */}
             <div className="flex gap-2 ml-auto">
-              {!isEditing ? (
+              {isOwnProfile && !isEditing ? (
                 <Button onClick={handleEdit} variant="outline" className="gap-2">
                   <Edit className="w-4 h-4" />
                   Editar Perfil
                 </Button>
-              ) : (
+              ) : isOwnProfile && isEditing ? (
                 <div className="flex gap-2">
                   <Button onClick={handleSave} disabled={isSaving} className="gap-2">
                     {isSaving ? (
@@ -466,7 +615,7 @@ export default function Perfil() {
                     Cancelar
                   </Button>
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
         </div>
@@ -514,34 +663,23 @@ export default function Perfil() {
                         className="w-full h-24 p-3 rounded-md bg-[#181b22] border border-gray-600 text-white resize-none"
                       />
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="location" className="text-gray-300">Ubicación</Label>
-                        <Input
-                          id="location"
-                          value={editForm.location}
-                          onChange={(e) => handleInputChange('location', e.target.value)}
-                          className="bg-[#181b22] border-gray-600 text-white"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="website" className="text-gray-300">Sitio Web</Label>
-                        <Input
-                          id="website"
-                          value={editForm.website}
-                          onChange={(e) => handleInputChange('website', e.target.value)}
-                          className="bg-[#181b22] border-gray-600 text-white"
-                        />
-                      </div>
+                    <div>
+                      <Label htmlFor="website" className="text-gray-300">Sitio Web</Label>
+                      <Input
+                        id="website"
+                        value={editForm.website}
+                        onChange={(e) => handleInputChange('website', e.target.value)}
+                        className="bg-[#181b22] border-gray-600 text-white"
+                      />
                     </div>
                     <div>
-                      <Label htmlFor="github" className="text-gray-300">Nombre de usuario de GitHub</Label>
+                      <Label htmlFor="github" className="text-gray-300">Enlace de GitHub</Label>
                       <Input
                         id="github"
                         value={editForm.github}
                         onChange={(e) => handleInputChange('github', e.target.value)}
                         className="bg-[#181b22] border-gray-600 text-white"
-                        placeholder="Nombre de usuario de GitHub"
+                        placeholder="https://github.com/tu-usuario"
                       />
                     </div>
                     <div>
@@ -561,12 +699,7 @@ export default function Perfil() {
                       <Mail className="w-5 h-5 text-gray-400" />
                       <span className="text-gray-300">{userProfile?.email || 'Email no disponible'}</span>
                     </div>
-                    {userProfile?.location && (
-                      <div className="flex items-center gap-3">
-                        <Globe className="w-5 h-5 text-gray-400" />
-                        <span className="text-gray-300">{userProfile?.location || 'Ubicación no disponible'}</span>
-                      </div>
-                    )}
+
                     <div className="flex items-center gap-3">
                       <Calendar className="w-5 h-5 text-gray-400" />
                       <span className="text-gray-300">Miembro desde {userStats?.memberSince || new Date().getFullYear()}</span>
@@ -587,8 +720,8 @@ export default function Perfil() {
                     {userProfile?.github && (
                       <div className="flex items-center gap-3">
                         <Code className="w-5 h-5 text-gray-400" />
-                        <a href={userProfile?.github ? `https://github.com/${userProfile.github}` : undefined} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">
-                          {userProfile?.github ? `github.com/${userProfile.github}` : 'GitHub no disponible'}
+                        <a href={userProfile?.github ? (userProfile.github.startsWith('http') ? userProfile.github : `https://github.com/${userProfile.github}`) : undefined} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">
+                          {userProfile?.github ? (userProfile.github.startsWith('http') ? userProfile.github : `github.com/${userProfile.github}`) : 'GitHub no disponible'}
                         </a>
                       </div>
                     )}
@@ -602,7 +735,7 @@ export default function Perfil() {
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2">
                   <Code className="w-5 h-5" />
-                  Mis Proyectos
+                  {isOwnProfile ? 'Mis Proyectos' : 'Proyectos'}
                 </CardTitle>
                 <CardDescription className="text-gray-400">
                   {userProjects.length} proyectos creados
