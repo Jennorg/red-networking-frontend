@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import axios from "axios";
 import { API_ENDPOINTS } from "@/config/env";
 import DeleteCommentButton from "@/components/admin/DeleteCommentButton";
+import Link from "next/link";
 
 // Interfaz que representa la estructura de la respuesta de la API para un proyecto.
 export interface ProjectApiResponse {
@@ -287,7 +288,14 @@ export function ProjectCard(props: ProjectCardProps) {
               <div className="flex-col">
                 <h1 className="text-blue-400 mb-1">{title}</h1>
                 <h2 className="text-gray-400 font-light">
-                  @{username} · {localStarCount} Estrellas
+                  <Link 
+                    href={`/Perfil`}
+                    className="hover:text-blue-400 transition-colors cursor-pointer"
+                    title={`Ver perfil de ${username}`}
+                  >
+                    @{username}
+                  </Link>
+                  <span> · {localStarCount} Estrellas</span>
                 </h2>
               </div>
             </div>
