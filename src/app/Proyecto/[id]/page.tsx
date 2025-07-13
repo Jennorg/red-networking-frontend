@@ -152,8 +152,6 @@ export default function ProyectoPage({
               }
             }
             
-
-            
             console.log('Final author names map:', authorNamesMap);
             setCommentAuthorNames(authorNamesMap);
           } catch (error) {
