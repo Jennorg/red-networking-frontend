@@ -124,7 +124,8 @@ export default function ProyectoPage({
     fetchComments();
   }, [id]);
 
-  useEffect(() => {
+  // Nueva función para generar el resumen IA bajo demanda
+  const handleGenerateSummary = () => {
     setIsLoadingSummary(true);
     setSummaryError(null);
     setIaSummary(null);
@@ -144,7 +145,7 @@ export default function ProyectoPage({
       })
       .catch(() => setSummaryError("Error al obtener el resumen."))
       .finally(() => setIsLoadingSummary(false));
-  }, [id]);
+  };
 
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
@@ -472,9 +473,18 @@ export default function ProyectoPage({
         </div>
         {/* Resumen IA */}
         <div className="bg-[#1e293b] border-2 border-blue-500 rounded-lg p-4 my-6 text-gray-200 shadow-lg">
-          <h3 className="font-semibold text-lg mb-2 text-blue-400">
-            Resumen generado por IA
-          </h3>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-semibold text-lg text-blue-400">Resumen generado por IA</h3>
+            {(!iaSummary && !isLoadingSummary) && (
+              <button
+                className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
+                onClick={handleGenerateSummary}
+                disabled={isLoadingSummary}
+              >
+                {isLoadingSummary ? "Generando..." : "Generar resumen IA"}
+              </button>
+            )}
+          </div>
           {isLoadingSummary && (
             <div className="text-blue-400">Cargando resumen...</div>
           )}
@@ -514,7 +524,7 @@ export default function ProyectoPage({
                       {...props}
                     />
                   ),
-                  p: ({ node, ...props }) => <p className="mb-2" {...props} />,
+                  p: ({ node, ...props }) => <p className="mb-2" {...props} />, 
                 }}
               >
                 {iaSummary}
