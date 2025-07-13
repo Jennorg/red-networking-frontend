@@ -123,13 +123,9 @@ export default function Signup() {
         // Usar el contexto de autenticación con datos completos del usuario
         login(token, userData);
 
-      setTimeout(() => {
-        toast.info("Inicio de sesión automático. Redirigiendo...");
-
         setTimeout(() => {
           router.push("/");
         }, 1500);
-      }, 1500);
     } else {
       toast.error(loginResponse.data.message || "No se pudo iniciar sesión");
     }

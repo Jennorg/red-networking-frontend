@@ -12,6 +12,26 @@ export const env = {
 // API endpoints
 export const API_ENDPOINTS = {
   PAGINA_PRINCIPAL: `${env.API_BASE_URL}/pagina_principal`,
+  // User favorites endpoints
+  USER_FAVORITES: (userId: string) => `${env.API_BASE_URL}/users/${userId}/favorites`,
+  USER_FAVORITE_PROJECT: (userId: string, projectId: string) => `${env.API_BASE_URL}/users/${userId}/favorites/${projectId}`,
+  // User projects endpoint
+  USER_PROJECTS: (userId: string) => `${env.API_BASE_URL}/usuario_projects/${userId}`,
+  // Alternative favorites endpoints (in case the above don't work)
+  FAVORITES_ALT: `${env.API_BASE_URL}/favorites`,
+  FAVORITE_PROJECT_ALT: (projectId: string) => `${env.API_BASE_URL}/favorites/${projectId}`,
+  // Project comments endpoint
+  PROJECT_COMMENTS: (projectId: string) => `${env.API_BASE_URL}/projects/${projectId}/comentarios`,
+  // Project details endpoint
+  PROJECT_DETAILS: (projectId: string) => `${env.API_BASE_URL}/projects/${projectId}`,
+  // User management endpoints
+  USERS_LIST: `${env.API_BASE_URL}/auth/users`,
+  USER_ROLE_CHANGE: (userId: string) => `${env.API_BASE_URL}/users/${userId}/cambiar-rol`,
+  // Project submission endpoint
+  PROJECT_SUBMISSION: `${env.API_BASE_URL}/subida_proyecto`,
+  // Auth endpoints
+  AUTH_LOGIN: `${env.API_BASE_URL.replace('/api', '')}/auth/login`,
+  AUTH_REGISTER: `${env.API_BASE_URL.replace('/api', '')}/auth/register`,
   // Add more endpoints here as needed
 } as const;
 
