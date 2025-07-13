@@ -1,17 +1,17 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-title: "Ranking - Red Networking",
-description: "Ranking de proyectos en Red Networking",
-icons: {
-    icon: "/pngs/uneg-logo.png",
-},
+  title: "Ranking - Red Networking",
+  description: "Ranking de proyectos en Red Networking",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RankingLayout({
-children,
+  children,
 }: {
-children: React.ReactNode;
+  children: React.ReactNode;
 }) {
-return children;
+  return <>{children}</>;
 } 

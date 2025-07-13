@@ -1,15 +1,8 @@
-import type { Metadata } from "next";
 "use client";
-export const metadata: Metadata = {
-  title: "Ranking - Red Networking",
-  description: "Ranking de proyectos en Red Networking",
-  icons: {
-    icon: "/favicon.svg",
-  },
-};
 
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import { ProjectCard } from "@/components/card/ProjectCard";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { ProjectCategorySelector } from "@/components/misc/ProjectCategorySelector";
@@ -43,7 +36,7 @@ export default function Ranking() {
     fetchRanking();
   }, []);
 
- 
+
 
   const handlePageChange = (page: number) => {
     // Validate page number before changing
