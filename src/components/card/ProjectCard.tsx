@@ -6,7 +6,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Eye, Star, MessageCircleMore, Heart, Loader2 } from "lucide-react";
 import { LanguageIcon } from "../misc/LanguageIcon";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import axios from "axios";
