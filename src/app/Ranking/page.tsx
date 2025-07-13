@@ -34,7 +34,7 @@ export default function Ranking() {
     fetchRanking();
   }, []);
 
-
+ 
 
   const handlePageChange = (page: number) => {
     // Validate page number before changing
