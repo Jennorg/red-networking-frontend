@@ -1,6 +1,7 @@
 /// <reference types="react" />
 import { notFound } from 'next/navigation';
 import axios from "axios";
+import { API_ENDPOINTS } from "@/config/env";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import Image from "next/image";
 
@@ -21,7 +22,7 @@ interface Proyecto {
 
 async function getProyecto(id: string): Promise<Proyecto | null> {
   try {
-    const res = await axios.get(`https://red-networking-backend.vercel.app/api/projects/${id}`);
+    const res = await axios.get(API_ENDPOINTS.PROJECT_DETAILS(id));
     if (!res.data || !res.data.proyecto) return null;
     return res.data.proyecto;
   } catch {
