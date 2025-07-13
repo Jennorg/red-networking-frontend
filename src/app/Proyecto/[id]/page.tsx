@@ -271,9 +271,9 @@ export default function ProyectoPage({ params }: { params: Promise<{ id: string 
             <ul className="flex flex-col gap-1 ml-2">
               {authorNames && authorNames.length > 0 ? (
                 authorNames.map((author, idx) => (
-                  <li key={idx} className="flex items-center gap-2">
+                <li key={idx} className="flex items-center gap-2">
                     <span className="bg-blue-900 text-blue-300 px-2 py-1 rounded-full text-sm font-medium">{author}</span>
-                  </li>
+                </li>
                 ))
               ) : (
                 <li className="text-gray-400 text-sm">Sin autores especificados</li>
@@ -351,7 +351,7 @@ export default function ProyectoPage({ params }: { params: Promise<{ id: string 
               ) : (
                 <span className="text-gray-400 text-sm">Sin etiquetas</span>
               )}
-            </div>
+          </div>
           </div>
         </div>
         {/* Recursos */}
