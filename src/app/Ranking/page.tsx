@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-
+"use client";
 export const metadata: Metadata = {
   title: "Ranking - Red Networking",
   description: "Ranking de proyectos en Red Networking",
@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   },
 };
 
-"use client";
+
 import { useState } from "react";
 import { ProjectCard } from "@/components/card/ProjectCard";
 import DashboardLayout from "@/components/layout/DashboardLayout";
