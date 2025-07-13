@@ -20,28 +20,29 @@ import {
 import { CreateProjectRatingForm } from "../form/CreateProjectRatingForm";
 
 const ProjectDropDownActions = ({ project }: { project?: Project }) => {
-  //const [openDelete, setOpenDelete] = useState(false);
   const [openRating, setOpenRating] = useState(false);
 
-  // const handleDelete = async (id: number | string) => {
-  //   //await deleteInformationSource.mutateAsync(id);
-  //   //setOpenDelete(false);
-  // };
   return (
     <>
       <DropdownMenu>
         <DropdownMenuTrigger>
-          <Button variant="ghost" className="h-8 w-8 p-0">
-            <span className="sr-only"></span>
+          <Button
+            variant="ghost"
+            className="h-8 w-8 p-0 text-gray-300 hover:text-white"
+          >
+            <span className="sr-only">Menú</span>
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
 
         <DropdownMenuContent
           align="center"
-          className="flex gap-2 justify-center"
+          className="bg-gray-800 border-gray-700 text-gray-300"
         >
-          <DropdownMenuItem onClick={() => setOpenRating(true)}>
+          <DropdownMenuItem
+            onClick={() => setOpenRating(true)}
+            className="hover:bg-gray-700 focus:bg-gray-700"
+          >
             <ClipboardPenLine className="size-5 text-green-500" />
             <p className="pl-2">Calificar</p>
           </DropdownMenuItem>
@@ -50,10 +51,14 @@ const ProjectDropDownActions = ({ project }: { project?: Project }) => {
 
       {/* DIALOGO DE CALIFICACION */}
       <Dialog open={openRating} onOpenChange={setOpenRating}>
-        <DialogContent>
+        <DialogContent className="bg-gray-800 border-gray-700 text-white max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-center">Evaluar Proyecto</DialogTitle>
-            <DialogDescription className="text-center p-2 mb-0 pb-0"></DialogDescription>
+            <DialogTitle className="text-center text-white">
+              Evaluar Proyecto
+            </DialogTitle>
+            <DialogDescription className="text-center p-2 mb-0 pb-0 text-gray-400">
+              Califica este proyecto según diferentes criterios
+            </DialogDescription>
 
             <CreateProjectRatingForm
               initialData={project}
