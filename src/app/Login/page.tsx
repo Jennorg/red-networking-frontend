@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { ro } from "date-fns/locale";
 
 // Esquema de validación con Zod
 const loginSchema = z.object({
@@ -70,7 +71,8 @@ export default function Login() {
         const userData = {
           id: result.token?.id || result.user?.id || result.userId || result.id,
           email: result.user?.email || result.email || '',
-          name: result.user?.name || result.name || ''
+          name: result.user?.name || result.name || '',
+          role: result.user?.role || result.role || ''
         };
         
         console.log('User data extracted:', userData);
