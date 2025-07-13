@@ -5,7 +5,6 @@ import { notFound } from "next/navigation";
 import axios from "axios";
 import { API_ENDPOINTS } from "@/config/env";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import type { Metadata } from "next";
 import Image from "next/image";
 import { Github, FileText, Download } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -53,18 +52,7 @@ async function getProyecto(id: string): Promise<Proyecto | null> {
   }
 }
 
-// Función para generar metadatos dinámicos
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  const proyecto = await getProyecto(params.id);
-  
-  return {
-    title: proyecto ? `${proyecto.title} - Red Networking` : "Proyecto - Red Networking",
-    description: proyecto ? proyecto.description.substring(0, 160) + "..." : "Detalles del proyecto",
-    icons: {
-      icon: "/favicon.svg",
-    },
-  };
-}
+
 
 // Función para obtener nombres de autores
 async function getAuthorNames(authorIds: string[]): Promise<string[]> {

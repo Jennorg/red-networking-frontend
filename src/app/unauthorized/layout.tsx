@@ -1,8 +1,8 @@
 import { METADATA } from "@/lib/metadata";
 
-export const metadata = METADATA.RANKING;
+export const metadata = METADATA.UNAUTHORIZED;
 
-export default function RankingLayout({
+export default function UnauthorizedLayout({
   children,
 }: {
   children: React.ReactNode;

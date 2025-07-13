@@ -1,12 +1,6 @@
-import type { Metadata } from "next";
+import { METADATA } from "@/lib/metadata";
 
-export const metadata: Metadata = {
-title: "Registrarse - Red Networking",
-description: "Crea tu cuenta en Red Networking",
-icons: {
-    icon: "/pngs/uneg-logo.png",
-},
-};
+export const metadata = METADATA.SIGNUP;
 
 export default function SignupLayout({
 children,

@@ -1,12 +1,6 @@
-import type { Metadata } from "next";
+import { METADATA } from "@/lib/metadata";
 
-export const metadata: Metadata = {
-title: "Iniciar Sesión - Red Networking",
-description: "Accede a tu cuenta en Red Networking",
-icons: {
-    icon: "/pngs/uneg-logo.png",
-},
-};
+export const metadata = METADATA.LOGIN;
 
 export default function LoginLayout({
 children,

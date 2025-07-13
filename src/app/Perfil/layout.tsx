@@ -1,12 +1,6 @@
-import type { Metadata } from "next";
+import { METADATA } from "@/lib/metadata";
 
-export const metadata: Metadata = {
-title: "Mi Perfil - Red Networking",
-description: "Gestiona tu perfil en Red Networking",
-icons: {
-    icon: "/pngs/uneg-logo.png",
-},
-};
+export const metadata = METADATA.PROFILE;
 
 export default function PerfilLayout({
 children,
