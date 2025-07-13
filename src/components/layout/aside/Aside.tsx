@@ -2,6 +2,7 @@
 
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
+import Link from "next/link";
 import MyFavorites from "./MyFavorites";
 import MyProyects from "./MyProyects";
 
@@ -43,7 +44,7 @@ const Aside = () => {
         <div className="relative h-full flex flex-col px-3 py-4 overflow-y-auto shadow-md dark:shadow-zinc-800 text-white">
           {/* Contenido del sidebar */}
           <MyProyects />
-          <MyFavorites />          
+          <MyFavorites />
         </div>
       </aside>
     </>

@@ -12,6 +12,7 @@ import { Heart, MessageCircleMore, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useState } from "react";
+import DeleteProjectButton from "@/components/admin/DeleteProjectButton";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import ProjectDropDownActions from "@/components/misc/ProjectDropDownActions";
@@ -267,13 +268,19 @@ export default function ProyectoPage({
     <DashboardLayout>
       <div className="w-full max-w-5xl mx-auto bg-[#232733] rounded-xl shadow-lg p-8 border border-gray-700 my-8 text-white">
         {/* Header principal */}
-        <div className="mb-6 border-b border-gray-700 pb-4">
-          <h1 className="text-3xl font-bold text-center mb-2 text-white">
-            Título del Proyecto:
+        <div className="mb-6 border-b border-gray-700 pb-4 flex justify-between items-center">
+          <h1 className="text-3xl font-bold text-center sm:text-left mb-2 text-white">
+            Título del Proyecto:{" "}
             <span className="text-blue-400">{proyecto.title}</span>
-            {role === "profesor" && <ProjectDropDownActions projectId={id} />}
           </h1>
+          {user?.role === "profesor" && (
+            <ProjectDropDownActions projectId={id} />
+          )}
+          {user?.role === "admin" && (
+            <DeleteProjectButton projectId={proyecto._id} adminId={user.id} />
+          )}
         </div>
+
         {/* Autores y Fecha */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div className="bg-[#181b22] rounded-lg p-4 flex flex-col gap-2 border border-gray-700 text-gray-200">
