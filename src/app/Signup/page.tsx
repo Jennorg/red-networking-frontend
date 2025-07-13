@@ -96,7 +96,7 @@ export default function Signup() {
       if (!registro.data.proceso) {
       toast.error(registro.data.message || "Error al registrarse");
       return;
-     }
+    }
 
       toast.success("Registro exitoso.");
 
@@ -114,8 +114,7 @@ export default function Signup() {
         const userData = {
           id: userId,
           email: email,
-          name: name,
-          role: loginResponse.data.user?.role || ''
+          name: name
         };
         
         console.log('User data extracted:', userData);
@@ -123,9 +122,13 @@ export default function Signup() {
         // Usar el contexto de autenticación con datos completos del usuario
         login(token, userData);
 
+      setTimeout(() => {
+        toast.info("Inicio de sesión automático. Redirigiendo...");
+
         setTimeout(() => {
           router.push("/");
         }, 1500);
+      }, 1500);
     } else {
       toast.error(loginResponse.data.message || "No se pudo iniciar sesión");
     }
