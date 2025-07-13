@@ -46,6 +46,39 @@ const Main = () => {
     window.dispatchEvent(new CustomEvent('projectsChanged'));
   };
 
+  // Función para obtener los favoritos del usuario
+  const fetchUserFavorites = useCallback(async () => {
+    if (!isAuthenticated || !user) {
+      setFavoritedProjects(new Set());
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(
+        API_ENDPOINTS.USER_FAVORITES(user.id),
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      // Extraer los IDs de los proyectos favoritos
+      const favoritesData = response.data.favoritos || response.data || [];
+      const favoriteIds = Array.isArray(favoritesData) 
+        ? favoritesData.map((fav: any) => fav._id || fav.id || fav)
+        : [];
+      
+      console.log('User favorites:', favoriteIds);
+      setFavoritedProjects(new Set(favoriteIds));
+    } catch (error) {
+      console.error("Error fetching user favorites:", error);
+      setFavoritedProjects(new Set());
+    }
+  }, [isAuthenticated, user]);
+
   const fetchData = async (page: number) => {
     console.log(`Main: fetchData called with page ${page}`);
     if (page <= 0 || !page) return; 
@@ -115,6 +148,8 @@ const Main = () => {
         console.log("Project added to favorites:", response.data);
         setFavoritedProjects(prev => new Set(prev).add(projectId));
         notifyFavoritesChange(); // Notify sidebar
+        // Actualizar la lista de favoritos desde el backend
+        await fetchUserFavorites();
         return; // Success, exit early
       } catch (firstError) {
         console.log("First endpoint failed, trying alternative:", firstError);
@@ -135,6 +170,8 @@ const Main = () => {
           console.log("Project added to favorites (alternative):", response.data);
           setFavoritedProjects(prev => new Set(prev).add(projectId));
           notifyFavoritesChange(); // Notify sidebar
+          // Actualizar la lista de favoritos desde el backend
+          await fetchUserFavorites();
           return; // Success, exit early
         } catch (secondError) {
           console.log("Alternative endpoint also failed:", secondError);
@@ -159,7 +196,7 @@ const Main = () => {
         return newSet;
       });
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, fetchUserFavorites]);
 
   const removeFromFavorites = useCallback(async (projectId: string) => {
     if (!isAuthenticated || !user) {
@@ -191,6 +228,8 @@ const Main = () => {
           return newSet;
         });
         notifyFavoritesChange(); // Notify sidebar
+        // Actualizar la lista de favoritos desde el backend
+        await fetchUserFavorites();
         return; // Success, exit early
       } catch (firstError) {
         console.log("First endpoint failed, trying alternative:", firstError);
@@ -215,6 +254,8 @@ const Main = () => {
             return newSet;
           });
           notifyFavoritesChange(); // Notify sidebar
+          // Actualizar la lista de favoritos desde el backend
+          await fetchUserFavorites();
           return; // Success, exit early
         } catch (secondError) {
           console.log("Alternative endpoint also failed:", secondError);
@@ -230,7 +271,7 @@ const Main = () => {
         return newSet;
       });
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, fetchUserFavorites]);
 
   const toggleFavorite = useCallback((projectId: string) => {
     if (!isAuthenticated) {
@@ -252,6 +293,10 @@ const Main = () => {
   useEffect(() => {
     fetchData(currentPage);
   }, [currentPage]);
+
+  useEffect(() => {
+    fetchUserFavorites();
+  }, [fetchUserFavorites]);
 
   const handlePageChange = (page: number) => {
     console.log(`Main: handlePageChange called with page ${page}`);

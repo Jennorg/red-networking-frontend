@@ -7,6 +7,8 @@ import Notifications from "./Notifications";
 import AddProjectButton from "./AddProjectButton";
 import PerfilBubble from "@/components/common/PerfilBubble";
 import { useAuth } from "@/contexts/AuthContext";
+import { Trophy } from "lucide-react";
+import Link from "next/link";
 
 import {
   NavigationMenu,
@@ -36,6 +38,15 @@ const Header = () => {
       <div className="flex items-center gap-4 ml-auto">
        
         <Notifications />
+
+        <Link 
+          href="/Ranking" 
+          className="flex items-center gap-2 px-3 py-2 text-white hover:bg-gray-700 rounded-md transition-colors"
+          title="Ver Ranking"
+        >
+          <Trophy className="w-5 h-5 text-yellow-400" />
+          <span className="hidden sm:inline">Ranking</span>
+        </Link>
 
         <AddProjectButton />
 
