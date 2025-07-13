@@ -53,7 +53,7 @@ const Header = () => {
                   <p className="text-sm font-medium">{user.name || user.email}</p>
                   <p className="text-xs text-gray-300 break-all">Usuario ID: {user.id}</p>
                 </div>
-                <a href="/perfil" className="block px-4 py-2 hover:bg-gray-600 transition-colors">Perfil</a>
+                <a href="/Perfil" className="block px-4 py-2 hover:bg-gray-600 transition-colors">Perfil</a>
                 <button 
                   onClick={handleLogout}
                   className="block w-full text-left px-4 py-2 hover:bg-gray-600 transition-colors"
