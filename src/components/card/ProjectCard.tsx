@@ -10,6 +10,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import axios from "axios";
 import { API_ENDPOINTS } from "@/config/env";
+import DeleteCommentButton from "@/components/admin/DeleteCommentButton";
 
 // Interfaz que representa la estructura de la respuesta de la API para un proyecto.
 export interface ProjectApiResponse {
@@ -208,24 +209,36 @@ export function ProjectCard(props: ProjectCardProps) {
     return (
       <Card key={comment._id} className="bg-gray-800 border border-gray-700 mb-3">
         <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-sm">
-            <Avatar className="w-6 h-6">
-              <AvatarImage
-                src={comment.authorAvatar || "/pngs/avatar.png"}
-                alt={`Avatar de ${comment.author}`}
-              />
-              <AvatarFallback>
-                {comment.author
-                  ? comment.author.substring(0, 2).toUpperCase()
-                  : "CN"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-col">
-              <span className="text-blue-400 text-xs">{comment.author}</span>
-              <span className="text-gray-400 text-xs">
-                {fechaFormateada}
-              </span>
+          <CardTitle className="flex justify-between items-center text-sm">
+            <div className="flex items-center gap-2">
+              <Avatar className="w-6 h-6">
+                <AvatarImage
+                  src={comment.authorAvatar || "/pngs/avatar.png"}
+                  alt={`Avatar de ${comment.author}`}
+                />
+                <AvatarFallback>
+                  {comment.author
+                    ? comment.author.substring(0, 2).toUpperCase()
+                    : "CN"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col">
+                <span className="text-blue-400 text-xs">{comment.author}</span>
+                <span className="text-gray-400 text-xs">{fechaFormateada}</span>
+              </div>
             </div>
+
+            {user?.role === "admin" && (
+              <DeleteCommentButton
+                commentId={comment._id}
+                adminId={user.id}
+                onDeleted={() =>
+                  setComments((prev) =>
+                    prev.filter((c) => c._id !== comment._id)
+                  )
+                }
+              />
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
