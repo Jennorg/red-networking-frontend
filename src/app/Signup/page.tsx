@@ -114,7 +114,8 @@ export default function Signup() {
         const userData = {
           id: userId,
           email: email,
-          name: name
+          name: name,
+          role: loginResponse.data.user?.role || ''
         };
         
         console.log('User data extracted:', userData);
