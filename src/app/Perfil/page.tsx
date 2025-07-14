@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import DeleteUserButton from "@/components/admin/DeleteUserButton";
+import RoleChangeButton from "@/components/admin/RoleChangeButton";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAuthenticatedRequest } from "@/hooks/useAuthenticatedRequest";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -617,6 +619,13 @@ export default function Perfil() {
                 </div>
               ) : null}
             </div>
+
+                {user?.role === "admin" && !isOwnProfile &&  (
+                  <RoleChangeButton userId={userProfile._id} refetchProfile={loadProfileData} />
+                )}
+                {user?.role === "admin" && (
+                  <DeleteUserButton userId={userProfile._id} adminId={user.id} />
+                )}
           </div>
         </div>
 
@@ -841,7 +850,7 @@ export default function Perfil() {
             </Card>
 
             {/* Configuración Rápida */}
-            <Card className="bg-[#232733] border-gray-700">
+            {/* <Card className="bg-[#232733] border-gray-700">
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2">
                   <Settings className="w-5 h-5" />
@@ -866,7 +875,7 @@ export default function Perfil() {
                   Ayuda
                 </Button>
               </CardContent>
-            </Card>
+            </Card> */}
           </div>
         </div>
       </div>

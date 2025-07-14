@@ -1,8 +1,7 @@
 "use client";
 
-import { ClipboardPenLine, Eye, MoreHorizontal } from "lucide-react";
+import { ClipboardPenLine, Eye, MoreHorizontal, Star } from "lucide-react";
 import { useState } from "react";
-import { CreateProjectRatingForm } from "../form/CreateProjectRatingForm";
 import { Button } from "../ui/button";
 import {
   Dialog,
@@ -20,10 +19,13 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useGetRatingByProjectTeacher } from "../../../hooks/useGetRatingByProjectTeacher";
 import ShowRatingPage from "@/app/Proyecto/evaluacion/page";
+import { CreateProjectRatingForm } from "../form/CreateProjectRatingForm";
+import { CreatePuntuacionForm } from "../form/CreatePuntuacionProjectForm";
 
 const ProjectDropDownActions = ({ projectId }: { projectId: string }) => {
   const [openRating, setOpenRating] = useState(false);
   const [openWatchRating, setOpenWatchRating] = useState(false);
+  const [openPuntuacion, setOpenPuntuacion] = useState(false);
   const { user } = useAuth();
 
   const value = {
@@ -50,23 +52,25 @@ const ProjectDropDownActions = ({ projectId }: { projectId: string }) => {
           align="center"
           className="bg-gray-800 border-gray-700 text-gray-300"
         >
-          {data?.rating === null ? (
+          {data?.rating === null && user?.role === "profesor" ? (
             <DropdownMenuItem
               onClick={() => setOpenRating(true)}
-              className="hover:bg-gray-700 focus:bg-gray-700"
+              className="hover:bg-gray-700 focus:bg-gray-300"
             >
               <ClipboardPenLine className="size-5 text-green-500" />
               <p className="pl-2">Calificar</p>
             </DropdownMenuItem>
-          ) : (
-            <DropdownMenuItem
-              onClick={() => setOpenWatchRating(true)}
-              className="hover:bg-gray-700 focus:bg-gray-700"
-            >
-              <Eye className="size-5 text-white" />
+          ) : user?.role === "profesor" && data?.rating !== null ? (
+            <DropdownMenuItem onClick={() => setOpenWatchRating(true)}>
+              <Eye className="size-5 text-blue-500" />
               <p className="pl-2">Ver calificacion</p>
             </DropdownMenuItem>
-          )}
+          ) : null}
+
+          <DropdownMenuItem onClick={() => setOpenPuntuacion(true)}>
+            <Star className="size-5 text-yellow-500" />
+            <p className="pl-2">Puntuar</p>
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -89,14 +93,15 @@ const ProjectDropDownActions = ({ projectId }: { projectId: string }) => {
         </DialogContent>
       </Dialog>
 
+      {/* DIALOGO PARA EL FORM PUNTUACION DE CUALQUIER PERSONAS */}
       <Dialog open={openWatchRating} onOpenChange={setOpenWatchRating}>
         <DialogContent className="bg-gray-800 border-gray-700 text-white max-w-md">
           <DialogHeader>
             <DialogTitle className="text-center text-white">
-              Evaluar Proyecto
+              Puntuar Proyecto
             </DialogTitle>
             <DialogDescription className="text-center p-2 mb-0 pb-0 text-gray-400">
-              Calificacion del setProyecto
+              Puntuacion del proyecto
             </DialogDescription>
 
             {data?.rating && (
@@ -107,6 +112,23 @@ const ProjectDropDownActions = ({ projectId }: { projectId: string }) => {
                 onClose={() => setOpenWatchRating(false)}
               />
             )}
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+
+      {/* DIALOGO PARA EL FORM PUNTUACION DE CUALQUIER PERSONAS */}
+      <Dialog open={openPuntuacion} onOpenChange={setOpenPuntuacion}>
+        <DialogContent className="bg-gray-800 border-gray-700 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center text-white">
+              Puntuar Proyecto
+            </DialogTitle>
+            <DialogDescription className="text-center p-2 mb-0 pb-0 text-gray-400"></DialogDescription>
+
+            <CreatePuntuacionForm
+              projectId={projectId}
+              onClose={() => setOpenPuntuacion(false)}
+            />
           </DialogHeader>
         </DialogContent>
       </Dialog>

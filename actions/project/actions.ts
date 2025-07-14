@@ -8,6 +8,11 @@ export interface RatingData {
   score: number;
   feedback: string;
 }
+
+export interface PuntuacionData {
+  projectID: string;
+  data: { puntuacion: number; feedback: string };
+}
 export const useCreateProjectRating = () => {
   //const queryClient = useQueryClient();
   const createMutation = useMutation({
@@ -34,5 +39,37 @@ export const useCreateProjectRating = () => {
   });
   return {
     createRating: createMutation,
+  };
+};
+
+export const useCreatePuntuacionProject = () => {
+  //const queryClient = useQueryClient();
+  const createMutation = useMutation({
+    //mutationKey: ["pilots"],
+    mutationFn: async ({ projectID, data }: PuntuacionData) => {
+      await axiosInstance.post(
+        `/projects/${projectID}/agregar-puntuacion`,
+        data,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    },
+    onSuccess: () => {
+      toast.success("¡Creado!", {
+        description: ` La puntuacion ha sido creada correctamente.`,
+      });
+    },
+    onError: (error) => {
+      toast.error("Oops!", {
+        description: "No se pudo realizar la evluacion...",
+      });
+      console.log(error);
+    },
+  });
+  return {
+    createPuntuacion: createMutation,
   };
 };
