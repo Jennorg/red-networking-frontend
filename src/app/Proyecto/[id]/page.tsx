@@ -1,12 +1,11 @@
 "use client";
 /// <reference types="react" />
 import React from "react";
-import { notFound } from "next/navigation";
 import axios from "axios";
 import { API_ENDPOINTS } from "@/config/env";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import Image from "next/image";
-import { Github, FileText, Download } from "lucide-react";
+import { Github, Download } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Heart, MessageCircleMore, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -40,6 +39,7 @@ interface Comment {
   authorID?: string; // Add authorID field from backend
   authorAvatar?: string;
   date: string;
+  createdAt?: string;
   likes: string[];
   replies?: Comment[];
 }
@@ -60,24 +60,20 @@ async function getAuthorNames(authorIds: string[]): Promise<string[]> {
     const response = await axios.get(
       "https://red-networking-backend.vercel.app/auth/users"
     );
-    const users = response.data.users || [];
+    const users: { _id: string; name: string }[] = response.data.users || [];
     
     return authorIds.map((id) => {
-      const user = users.find((u: any) => u._id === id);
+      const user = users.find((u) => u._id === id);
       return user ? user.name : "Usuario desconocido";
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error obteniendo nombres de autores:", error);
     return authorIds.map(() => "Usuario desconocido");
   }
 }
 
-export default function ProyectoPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = React.use(params);
+export default function ProyectoPage({ params }: { params: { id: string } }) {
+  const { id } = params;
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [commentsError, setCommentsError] = useState<string | null>(null);
@@ -95,7 +91,6 @@ export default function ProyectoPage({
   const [imageError, setImageError] = useState(false);
   const [isLoadingProject, setIsLoadingProject] = useState(true);
 
-  const role = user?.role || "";
   useEffect(() => {
     const fetchProyecto = async () => {
       setIsLoadingProject(true);
@@ -161,7 +156,7 @@ export default function ProyectoPage({
                 } else {
                   authorNamesMap[authorId as string] = "Usuario desconocido";
                 }
-              } catch (error: any) {
+              } catch (error: unknown) {
                 console.error(`Error getting user ${authorId}:`, error);
                 authorNamesMap[authorId as string] = "Usuario desconocido";
               }
@@ -264,7 +259,7 @@ export default function ProyectoPage({
 
   const renderComment = (comment: Comment) => {
     // Usar createdAt si existe, si no, usar date
-    const dateString = (comment as any).createdAt || comment.date;
+    const dateString = comment.createdAt || comment.date;
     let fechaFormateada = "Fecha no disponible";
     if (dateString) {
       const dateObj = new Date(dateString);
@@ -643,37 +638,37 @@ export default function ProyectoPage({
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
-                  h1: ({ node, ...props }) => (
+                  h1: (props) => (
                     <h1
                       className="underline decoration-blue-400 mb-2"
                       {...props}
                     />
                   ),
-                  h2: ({ node, ...props }) => (
+                  h2: (props) => (
                     <h2
                       className="underline decoration-blue-400 mb-2"
                       {...props}
                     />
                   ),
-                  h3: ({ node, ...props }) => (
+                  h3: (props) => (
                     <h3
                       className="underline decoration-blue-400 mb-2"
                       {...props}
                     />
                   ),
-                  em: ({ node, ...props }) => (
+                  em: (props) => (
                     <em className="text-blue-300 italic" {...props} />
                   ),
-                  strong: ({ node, ...props }) => (
+                  strong: (props) => (
                     <strong className="text-blue-400 font-bold" {...props} />
                   ),
-                  li: ({ node, ...props }) => (
+                  li: (props) => (
                     <li
                       className="mb-1 pl-2 list-disc list-inside"
                       {...props}
                     />
                   ),
-                  p: ({ node, ...props }) => <p className="mb-2" {...props} />, 
+                  p: (props) => <p className="mb-2" {...props} />, 
                 }}
               >
                 {iaSummary}

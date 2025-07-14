@@ -32,8 +32,12 @@ export default function DeleteProjectButton({ projectId, adminId }: DeleteProjec
       } else {
         toast.error(response.data.error || "No se pudo eliminar el proyecto.");
       }
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || "Error al eliminar el proyecto.");
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        toast.error(error.response?.data?.error || "Error al eliminar el proyecto.");
+      } else {
+        toast.error("Error al eliminar el proyecto.");
+      }
     } finally {
       setLoading(false);
       setOpen(false);

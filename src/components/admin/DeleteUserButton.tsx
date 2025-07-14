@@ -32,8 +32,12 @@ export default function DeleteUserButton({ userId, adminId }: DeleteUserButtonPr
       } else {
         toast.error(response.data.error || "No se pudo eliminar el usuario.");
       }
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || "Error al eliminar el usuario.");
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        toast.error(error.response?.data?.error || "Error al eliminar el usuario.");
+      } else {
+        toast.error("Error al eliminar el usuario.");
+      }
     } finally {
       setLoading(false);
       setOpen(false);

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import axios from "axios";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -17,7 +16,6 @@ interface DeleteCommentButtonProps {
 export default function DeleteCommentButton({ commentId, adminId, onDeleted }: DeleteCommentButtonProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   const handleDelete = async () => {
     setLoading(true);
@@ -31,8 +29,12 @@ export default function DeleteCommentButton({ commentId, adminId, onDeleted }: D
       } else {
         toast.error(response.data.error || "No se pudo eliminar el comentario.");
       }
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || "Error al eliminar el comentario.");
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        toast.error(error.response?.data?.error || "Error al eliminar el comentario.");
+      } else {
+        toast.error("Error al eliminar el comentario.");
+      }
     } finally {
       setLoading(false);
       setOpen(false);

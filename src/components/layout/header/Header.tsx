@@ -9,16 +9,6 @@ import PerfilBubble from "@/components/common/PerfilBubble";
 import { useAuth } from "@/contexts/AuthContext";
 import { Trophy } from "lucide-react";
 import Link from "next/link";
-
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu";
-
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 
 const Header = () => {

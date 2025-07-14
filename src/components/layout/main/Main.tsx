@@ -8,7 +8,6 @@ import { ProjectCard, ProjectCardProps } from "@/components/card/ProjectCard";
 import { SmartPagination } from "@/components/ui/smart-pagination";
 import { API_ENDPOINTS } from "@/config/env";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAuthenticatedRequest } from "@/hooks/useAuthenticatedRequest";
 import { toast } from "sonner";
 
 interface PaginationData {
@@ -20,15 +19,9 @@ interface PaginationData {
   total: number;
 }
 
-// Define la interfaz del backend para evitar errores de tipo
-interface BackendProject {
-  favoritos: number;
-  [key: string]: any;
-}
-
 const Main = () => {
   const { user, isAuthenticated } = useAuth();
-  const { post, delete: del } = useAuthenticatedRequest();
+  // const { post, delete: del } = useAuthenticatedRequest(); // unused
   const [projects, setProjects] = useState<ProjectCardProps[]>([]);
   const [paginationInfo, setPaginationInfo] = useState<PaginationData | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -40,11 +33,6 @@ const Main = () => {
   // Custom event to notify sidebar of favorites changes
   const notifyFavoritesChange = () => {
     window.dispatchEvent(new CustomEvent('favoritesChanged'));
-  };
-
-  // Custom event to notify sidebar of projects changes
-  const notifyProjectsChange = () => {
-    window.dispatchEvent(new CustomEvent('projectsChanged'));
   };
 
   // Función para obtener los favoritos del usuario
@@ -68,8 +56,8 @@ const Main = () => {
 
       // Extraer los IDs de los proyectos favoritos
       const favoritesData = response.data.favoritos || response.data || [];
-      const favoriteIds = Array.isArray(favoritesData) 
-        ? favoritesData.map((fav: any) => fav._id || fav.id || fav)
+      const favoriteIds: string[] = Array.isArray(favoritesData) 
+        ? favoritesData.map((fav: { _id?: string; id?: string } | string) => typeof fav === 'string' ? fav : fav._id || fav.id || '')
         : [];
       
       console.log('User favorites:', favoriteIds);
@@ -80,7 +68,10 @@ const Main = () => {
     }
   }, [isAuthenticated, user]);
 
-  const fetchData = async (page: number) => {
+  const fetchData = useCallback(async (page: number) => {
+    const notifyProjectsChange = () => {
+      window.dispatchEvent(new CustomEvent('projectsChanged'));
+    };
     console.log(`Main: fetchData called with page ${page}`);
     if (page <= 0 || !page) return; 
     
@@ -96,17 +87,17 @@ const Main = () => {
 
       console.log(`Main: API response received, setting data`);
       setProjects(
-        apiResponse.data .map(project => ({
+        apiResponse.data.map((project: ProjectCardProps & { favoritos?: number }) => ({
           ...project,
           stars: project.favoritos ?? 0,
-        })) as ProjectCardProps[]
+        }))
       );
       console.log(apiResponse.data); 
       setPaginationInfo(apiResponse);
       setCurrentPage(apiResponse.current_page);
       notifyProjectsChange(); // Notify sidebar of projects update
       
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error fetching data:", error);
       setProjects([]);
       setPaginationInfo(null);
@@ -114,7 +105,7 @@ const Main = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   // Elimino fetchUserFavorites y los useEffect relacionados
   // Elimino las llamadas a fetchUserFavorites en addToFavorites y removeFromFavorites
@@ -186,8 +177,8 @@ const Main = () => {
       }
     } catch (error: unknown) {
       console.error("Error adding project to favorites:", error);
-      if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as any;
+      if (typeof error === 'object' && error !== null && 'response' in error) {
+        const axiosError = error as { response?: { status?: number; data?: unknown; headers?: unknown }; config?: { url?: string; method?: string; headers?: unknown } };
         console.error("Response status:", axiosError.response?.status);
         console.error("Response data:", axiosError.response?.data);
         console.error("Response headers:", axiosError.response?.headers);
@@ -302,7 +293,7 @@ const Main = () => {
 
   useEffect(() => {
     fetchData(currentPage);
-  }, [currentPage]);
+  }, [currentPage, fetchData]);
 
   useEffect(() => {
     fetchUserFavorites();
