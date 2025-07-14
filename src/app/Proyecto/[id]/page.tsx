@@ -16,6 +16,7 @@ import DeleteProjectButton from "@/components/admin/DeleteProjectButton";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import ProjectDropDownActions from "@/components/misc/ProjectDropDownActions";
+import { toast } from "sonner";
 
 interface Proyecto {
   _id: string;
@@ -60,7 +61,7 @@ async function getAuthorNames(authorIds: string[]): Promise<string[]> {
       "https://red-networking-backend.vercel.app/auth/users"
     );
     const users = response.data.users || [];
-
+    
     return authorIds.map((id) => {
       const user = users.find((u: any) => u._id === id);
       return user ? user.name : "Usuario desconocido";
@@ -90,15 +91,28 @@ export default function ProyectoPage({
   const [iaSummary, setIaSummary] = useState<string | null>(null);
   const [isLoadingSummary, setIsLoadingSummary] = useState(false);
   const [summaryError, setSummaryError] = useState<string | null>(null);
+  const [imageLoading, setImageLoading] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const [isLoadingProject, setIsLoadingProject] = useState(true);
 
   const role = user?.role || "";
   useEffect(() => {
     const fetchProyecto = async () => {
-      const p = await getProyecto(id);
-      setProyecto(p);
-      if (p) {
-        const names = await getAuthorNames(p.authors || []);
-        setAuthorNames(names);
+      setIsLoadingProject(true);
+      try {
+        const p = await getProyecto(id);
+        setProyecto(p);
+        if (p) {
+          const names = await getAuthorNames(p.authors || []);
+          setAuthorNames(names);
+        }
+        // Resetear estados de imagen cuando cambie el proyecto
+        setImageLoading(false);
+        setImageError(false);
+      } catch (error) {
+        console.error("Error loading project:", error);
+      } finally {
+        setIsLoadingProject(false);
       }
     };
     fetchProyecto();
@@ -108,6 +122,7 @@ export default function ProyectoPage({
     const fetchComments = async () => {
       setIsLoadingComments(true);
       setCommentsError(null);
+      
       try {
         const response = await axios.get(API_ENDPOINTS.PROJECT_COMMENTS(id));
         const commentsData = Array.isArray(response.data.comentarios)
@@ -164,6 +179,7 @@ export default function ProyectoPage({
         console.error("Error cargando comentarios:", error);
         setCommentsError("Error al cargar los comentarios");
         setComments([]);
+        toast.error("Error al cargar los comentarios");
       } finally {
         setIsLoadingComments(false);
       }
@@ -197,6 +213,7 @@ export default function ProyectoPage({
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
     setIsSubmittingComment(true);
+    
     try {
       const res = await axios.post(
         `https://red-networking-backend.vercel.app/api/projects/${id}/agregar-comentario`,
@@ -210,10 +227,12 @@ export default function ProyectoPage({
         setNewComment("");
         setShowCommentInput(false);
       } else {
-        // Manejar error
+        console.error("Error al publicar el comentario");
+        toast.error("Error al publicar el comentario");
       }
     } catch (err) {
-      // Manejar error
+      console.error("Error al publicar comentario:", err);
+      toast.error("Error de conexión al publicar comentario");
     } finally {
       setIsSubmittingComment(false);
     }
@@ -221,6 +240,7 @@ export default function ProyectoPage({
 
   const handleLike = async (commentId: string) => {
     if (!user?.id) return;
+    
     try {
       const res = await axios.post(
         `https://red-networking-backend.vercel.app/api/projects/comentarios/${commentId}/like`,
@@ -232,9 +252,13 @@ export default function ProyectoPage({
             c._id === commentId ? { ...c, likes: res.data.resultado.likes } : c
           )
         );
+      } else {
+        console.error("Error al actualizar like");
+        toast.error("Error al actualizar like");
       }
     } catch (error) {
-      // Manejar error
+      console.error("Error al dar like:", error);
+      toast.error("Error de conexión al dar like");
     }
   };
 
@@ -298,10 +322,65 @@ export default function ProyectoPage({
     );
   };
 
-  if (!proyecto) {
-    return <div className="text-center text-white">Cargando...</div>;
+  if (isLoadingProject || !proyecto) {
+    return (
+      <DashboardLayout>
+        <div className="w-full max-w-5xl mx-auto bg-[#232733] rounded-xl shadow-lg p-8 border border-gray-700 my-8 text-white">
+          {/* Skeleton Header */}
+          <div className="mb-6 border-b border-gray-700 pb-4">
+            <div className="h-8 bg-gray-700 rounded animate-pulse mb-4"></div>
+            <div className="h-6 bg-gray-700 rounded animate-pulse w-3/4"></div>
+          </div>
+          
+          {/* Skeleton Content */}
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-[#181b22] rounded-lg p-4 border border-gray-700">
+                <div className="h-6 bg-gray-700 rounded animate-pulse mb-4"></div>
+                <div className="space-y-2">
+                  <div className="h-4 bg-gray-700 rounded animate-pulse"></div>
+                  <div className="h-4 bg-gray-700 rounded animate-pulse w-2/3"></div>
+                </div>
+              </div>
+              <div className="bg-[#181b22] rounded-lg p-4 border border-gray-700">
+                <div className="h-6 bg-gray-700 rounded animate-pulse mb-4"></div>
+                <div className="h-4 bg-gray-700 rounded animate-pulse"></div>
+              </div>
+            </div>
+            
+            <div className="bg-[#181b22] rounded-lg p-4 border border-gray-700">
+              <div className="h-6 bg-gray-700 rounded animate-pulse mb-4"></div>
+              <div className="space-y-2">
+                <div className="h-4 bg-gray-700 rounded animate-pulse"></div>
+                <div className="h-4 bg-gray-700 rounded animate-pulse"></div>
+                <div className="h-4 bg-gray-700 rounded animate-pulse w-3/4"></div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-[#181b22] rounded-lg p-4 border border-gray-700">
+                <div className="h-6 bg-gray-700 rounded animate-pulse mb-4"></div>
+                <div className="flex flex-wrap gap-2">
+                  <div className="h-6 w-16 bg-gray-700 rounded animate-pulse"></div>
+                  <div className="h-6 w-20 bg-gray-700 rounded animate-pulse"></div>
+                  <div className="h-6 w-14 bg-gray-700 rounded animate-pulse"></div>
+                </div>
+              </div>
+              <div className="bg-[#181b22] rounded-lg p-4 border border-gray-700">
+                <div className="h-6 bg-gray-700 rounded animate-pulse mb-4"></div>
+                <div className="flex flex-wrap gap-2">
+                  <div className="h-6 w-12 bg-gray-700 rounded animate-pulse"></div>
+                  <div className="h-6 w-18 bg-gray-700 rounded animate-pulse"></div>
+                  <div className="h-6 w-10 bg-gray-700 rounded animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
   }
-
+  
   // Debug: ver el valor de la fecha
   console.log("Fecha del proyecto:", proyecto.date);
   console.log("Tipo de fecha:", typeof proyecto.date);
@@ -440,8 +519,8 @@ export default function ProyectoPage({
                       {tag}
                     </span>
                   );
-                })
-              ) : (
+                }))
+              : (
                 <span className="text-gray-400 text-sm">Sin etiquetas</span>
               )}
             </div>
@@ -455,10 +534,10 @@ export default function ProyectoPage({
             </span>
             {proyecto.repositoryLink &&
             proyecto.repositoryLink.trim() !== "" ? (
-              <a
-                href={proyecto.repositoryLink}
-                target="_blank"
-                rel="noopener noreferrer"
+              <a 
+                href={proyecto.repositoryLink} 
+                target="_blank" 
+                rel="noopener noreferrer" 
                 className="text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-2"
               >
                 <Github className="w-5 h-5" />
@@ -471,7 +550,7 @@ export default function ProyectoPage({
           <div className="bg-[#181b22] rounded-lg p-4 border border-gray-700 flex flex-col items-center text-gray-200">
             <span className="font-semibold mb-2 text-white">Manual:</span>
             {proyecto.document && proyecto.document.trim() !== "" ? (
-              <a
+              <a 
                 href={proyecto.document}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -500,14 +579,39 @@ export default function ProyectoPage({
           </h3>
           <div className="flex justify-center">
             {proyecto.image && proyecto.image.trim() !== "" ? (
-              <div className="max-w-2xl w-full">
-                <Image
-                  src={proyecto.image}
-                  alt="Imagen del sistema"
+              <div className="max-w-2xl w-full relative">
+                <Image 
+                  src={proyecto.image} 
+                  alt="Imagen del sistema" 
                   width={800}
                   height={600}
-                  className="rounded-lg w-full h-auto max-h-96 object-contain border border-gray-700"
+                  className="rounded-lg w-full h-auto max-h-96 object-contain border border-gray-700" 
+                  onLoadStart={() => {
+                    setImageLoading(true);
+                    setImageError(false);
+                  }}
+                  onLoad={() => {
+                    setImageLoading(false);
+                    setImageError(false);
+                  }}
+                  onError={() => {
+                    setImageLoading(false);
+                    setImageError(true);
+                  }}
                 />
+                {imageLoading && (
+                  <div className="absolute inset-0 bg-gray-800 rounded-lg border border-gray-700 flex items-center justify-center z-10">
+                    <div className="text-center">
+                      <Loader2 className="w-8 h-8 animate-spin text-blue-400 mx-auto mb-2" />
+                      <p className="text-gray-400 text-sm">Cargando imagen...</p>
+                    </div>
+                  </div>
+                )}
+                {imageError && (
+                  <div className="absolute inset-0 bg-gray-800 rounded-lg border border-gray-700 flex items-center justify-center z-10">
+                    <span className="text-gray-400 text-sm">Error al cargar la imagen</span>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="w-full max-w-2xl h-64 bg-gray-800 rounded-lg border border-gray-700 flex items-center justify-center">
@@ -636,6 +740,23 @@ export default function ProyectoPage({
           )}
           {!isLoadingComments && !commentsError && comments.length > 0 && (
             <div className="space-y-3">{comments.map(renderComment)}</div>
+          )}
+          {isLoadingComments && (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-gray-800 border border-gray-700 rounded p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-6 h-6 bg-gray-700 rounded-full animate-pulse"></div>
+                    <div className="h-4 bg-gray-700 rounded animate-pulse w-24"></div>
+                    <div className="h-4 bg-gray-700 rounded animate-pulse w-16"></div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="h-4 bg-gray-700 rounded animate-pulse"></div>
+                    <div className="h-4 bg-gray-700 rounded animate-pulse w-3/4"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </div>
