@@ -1,6 +1,12 @@
 "use client";
 
-import { ClipboardPenLine, Eye, MoreHorizontal, Star } from "lucide-react";
+import {
+  ClipboardPenLine,
+  Eye,
+  MoreHorizontal,
+  ScrollText,
+  Star,
+} from "lucide-react";
 import { useState } from "react";
 import { Button } from "../ui/button";
 import {
@@ -21,10 +27,12 @@ import { useGetRatingByProjectTeacher } from "../../../hooks/useGetRatingByProje
 import ShowRatingPage from "@/app/Proyecto/evaluacion/page";
 import { CreateProjectRatingForm } from "../form/CreateProjectRatingForm";
 import { CreatePuntuacionForm } from "../form/CreatePuntuacionProjectForm";
+import RatingListPage from "./RatingList";
 
 const ProjectDropDownActions = ({ projectId }: { projectId: string }) => {
   const [openRating, setOpenRating] = useState(false);
   const [openWatchRating, setOpenWatchRating] = useState(false);
+  const [openListRating, setOpenListRating] = useState(false);
   const [openPuntuacion, setOpenPuntuacion] = useState(false);
   const { user } = useAuth();
 
@@ -71,6 +79,11 @@ const ProjectDropDownActions = ({ projectId }: { projectId: string }) => {
             <Star className="size-5 text-yellow-500" />
             <p className="pl-2">Puntuar</p>
           </DropdownMenuItem>
+
+          <DropdownMenuItem onClick={() => setOpenListRating(true)}>
+            <ScrollText className="size-5 text-red-500" />
+            <p className="pl-2">Ver calificaciones</p>
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -108,7 +121,6 @@ const ProjectDropDownActions = ({ projectId }: { projectId: string }) => {
               <ShowRatingPage
                 feedback={data.rating.feedback}
                 score={data.rating.score}
-                projectID={data.rating.projectID}
                 onClose={() => setOpenWatchRating(false)}
               />
             )}
@@ -128,6 +140,23 @@ const ProjectDropDownActions = ({ projectId }: { projectId: string }) => {
             <CreatePuntuacionForm
               projectId={projectId}
               onClose={() => setOpenPuntuacion(false)}
+            />
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+
+      {/* DIALOGO PARA VER CALIFICACIONES DE PROFESORES */}
+      <Dialog open={openListRating} onOpenChange={setOpenListRating}>
+        <DialogContent className="bg-gray-800 border-gray-700 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center text-white">
+              Lista de Calificaciones por Profesores
+            </DialogTitle>
+            <DialogDescription className="text-center p-2 mb-0 pb-0 text-gray-400"></DialogDescription>
+
+            <RatingListPage
+              projectId={projectId}
+              onClose={() => setOpenListRating(false)}
             />
           </DialogHeader>
         </DialogContent>
