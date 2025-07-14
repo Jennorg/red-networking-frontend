@@ -9,6 +9,7 @@ import { SmartPagination } from "@/components/ui/smart-pagination";
 import { API_ENDPOINTS } from "@/config/env";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAuthenticatedRequest } from "@/hooks/useAuthenticatedRequest";
+import { toast } from "sonner";
 
 interface PaginationData {
   current_page: number;
@@ -84,6 +85,7 @@ const Main = () => {
     if (page <= 0 || !page) return; 
     
     setIsLoading(true);
+    
     try {
       const fullUrl = `${API_ENDPOINTS.PAGINA_PRINCIPAL}?page=${page}`;
       console.log(`Main: Making API call to ${fullUrl}`);
@@ -103,10 +105,12 @@ const Main = () => {
       setPaginationInfo(apiResponse);
       setCurrentPage(apiResponse.current_page);
       notifyProjectsChange(); // Notify sidebar of projects update
+      
     } catch (error) {
       console.error("Error fetching data:", error);
       setProjects([]);
       setPaginationInfo(null);
+      toast.error("Error al cargar los proyectos");
     } finally {
       setIsLoading(false);
     }
@@ -150,6 +154,7 @@ const Main = () => {
         notifyFavoritesChange(); // Notify sidebar
         // Actualizar la lista de favoritos desde el backend
         await fetchUserFavorites();
+        
         return; // Success, exit early
       } catch (firstError) {
         console.log("First endpoint failed, trying alternative:", firstError);
@@ -172,6 +177,7 @@ const Main = () => {
           notifyFavoritesChange(); // Notify sidebar
           // Actualizar la lista de favoritos desde el backend
           await fetchUserFavorites();
+          
           return; // Success, exit early
         } catch (secondError) {
           console.log("Alternative endpoint also failed:", secondError);
@@ -189,6 +195,7 @@ const Main = () => {
         console.error("Request method:", axiosError.config?.method);
         console.error("Request headers:", axiosError.config?.headers);
       }
+      toast.error("Error al agregar a favoritos");
     } finally {
       setFavoriteLoading(prev => {
         const newSet = new Set(prev);
@@ -230,6 +237,7 @@ const Main = () => {
         notifyFavoritesChange(); // Notify sidebar
         // Actualizar la lista de favoritos desde el backend
         await fetchUserFavorites();
+        
         return; // Success, exit early
       } catch (firstError) {
         console.log("First endpoint failed, trying alternative:", firstError);
@@ -256,6 +264,7 @@ const Main = () => {
           notifyFavoritesChange(); // Notify sidebar
           // Actualizar la lista de favoritos desde el backend
           await fetchUserFavorites();
+          
           return; // Success, exit early
         } catch (secondError) {
           console.log("Alternative endpoint also failed:", secondError);
@@ -264,6 +273,7 @@ const Main = () => {
       }
     } catch (error) {
       console.error("Error removing project from favorites:", error);
+      toast.error("Error al quitar de favoritos");
     } finally {
       setFavoriteLoading(prev => {
         const newSet = new Set(prev);
@@ -323,25 +333,36 @@ const Main = () => {
 
   return (
     <div className="flex flex-col gap-2 sm:gap-5 w-full bg-gray-900 p-10">
-      {projects.map((project) => (
-        <ProjectCard
-          key={project._id}
-          {...project}
-          showComments={visibleComments.has(project._id)}
-          onToggleComments={() => toggleComments(project._id)}
-          isFavorited={favoritedProjects.has(project._id)}
-          onToggleFavorite={() => toggleFavorite(project._id)}
-          isFavoriteLoading={favoriteLoading.has(project._id)}
-        />
-      ))}
+      {isLoading ? (
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-300">Cargando proyectos...</p>
+          </div>
+        </div>
+      ) : (
+        <>
+          {projects.map((project) => (
+            <ProjectCard
+              key={project._id}
+              {...project}
+              showComments={visibleComments.has(project._id)}
+              onToggleComments={() => toggleComments(project._id)}
+              isFavorited={favoritedProjects.has(project._id)}
+              onToggleFavorite={() => toggleFavorite(project._id)}
+              isFavoriteLoading={favoriteLoading.has(project._id)}
+            />
+          ))}
 
-      {paginationInfo && (
-        <SmartPagination
-          currentPage={currentPage}
-          totalPages={paginationInfo.last_page}
-          onPageChange={handlePageChange}
-          isLoading={isLoading}
-        />
+          {paginationInfo && (
+            <SmartPagination
+              currentPage={currentPage}
+              totalPages={paginationInfo.last_page}
+              onPageChange={handlePageChange}
+              isLoading={isLoading}
+            />
+          )}
+        </>
       )}
     </div>
   );
