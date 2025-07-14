@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import DeleteUserButton from "@/components/admin/DeleteUserButton";
+import RoleChangeButton from "@/components/admin/RoleChangeButton";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAuthenticatedRequest } from "@/hooks/useAuthenticatedRequest";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -617,6 +619,13 @@ export default function Perfil() {
                 </div>
               ) : null}
             </div>
+
+                {user?.role === "admin" && !isOwnProfile &&  (
+                  <RoleChangeButton userId={userProfile._id} refetchProfile={loadProfileData} />
+                )}
+                {user?.role === "admin" && (
+                  <DeleteUserButton userId={userProfile._id} adminId={user.id} />
+                )}
           </div>
         </div>
 
