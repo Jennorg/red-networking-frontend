@@ -1,12 +1,15 @@
 "use client";
 
-import { Menu, X } from "lucide-react";
+import { Menu, X, User } from "lucide-react";
 import { useState } from "react";
+import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
 import MyFavorites from "./MyFavorites";
 import MyProyects from "./MyProyects";
 
 const Aside = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { user, isAuthenticated } = useAuth();
 
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
@@ -17,7 +20,7 @@ const Aside = () => {
       {/* Botón de hamburguesa para móviles - ahora cambia de posición */}
       <button
         className={`lg:hidden fixed z-40 p-2 rounded-md bg-gray-800 text-white transition-all duration-100
-          ${isOpen ? "left-50 top-4" : "left-2 top-16"}`}
+          ${isOpen ? "left-50 top-4" : "left-4 top-16"}`}
         onClick={toggleSidebar}
       >
         {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -43,26 +46,58 @@ const Aside = () => {
         <div className="relative h-full flex flex-col px-3 py-4 overflow-y-auto shadow-md dark:shadow-zinc-800 text-white">
           {/* Contenido del sidebar */}
           <MyProyects />
-          <MyFavorites />          
+          <MyFavorites />
+          
+
+
+          {/* Bloque de información del usuario */}
+          <div className="mt-auto pt-4 border-t border-gray-700">
+            <div className="bg-gray-700 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <User className="w-4 h-4 text-blue-400" />
+                <span className="text-sm font-medium text-white">Información del Usuario</span>
+              </div>
+              
+              {isAuthenticated && user ? (
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-gray-300">Email:</span>
+                    <span className="text-xs text-white font-medium truncate ml-2">
+                      {user.email || 'No especificado'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-gray-300">Nombre:</span>
+                    <span className="text-xs text-white font-medium truncate ml-2">
+                      {user.name || 'No especificado'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-gray-300">Rol:</span>
+                    <span className="text-xs text-blue-400 font-medium capitalize">
+                      {user.role || 'estudiante'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-gray-300">ID:</span>
+                    <span className="text-xs text-gray-400 font-mono truncate ml-2">
+                      {user.id}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-xs text-gray-400">
+                  {isAuthenticated ? 'Cargando información...' : 'No autenticado'}
+                </div>
+              )}
+            </div>
+          </div>
+          
+          
         </div>
       </aside>
     </>
   );
 }
-
-// function MenuItem({ icon, text }: { icon: string; text: string }) {
-//   const IconComponent = require(`lucide-react`)[icon];
-//   return (
-//     <li>
-//       <a
-//         href="#"
-//         className="flex items-center px-4 py-2 hover:bg-gray-800 rounded transition-colors gap-3"
-//       >
-//         {IconComponent && <IconComponent className="w-5 h-5" />}
-//         <span>{text}</span>
-//       </a>
-//     </li>
-//   );
-// }
 
 export default Aside;

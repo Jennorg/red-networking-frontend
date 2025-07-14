@@ -20,7 +20,7 @@ const PerfilBubble = () => {
 
   return (
     <Avatar>
-      <AvatarImage src="https://github.com/shadcn.png" />
+      <AvatarImage/>
       <AvatarFallback className="bg-blue-600 text-white">
         {isAuthenticated ? initials : '?'}
       </AvatarFallback>

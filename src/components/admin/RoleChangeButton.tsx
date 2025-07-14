@@ -9,16 +9,13 @@ import {
 import { Button } from "@/components/ui/button";
 import RoleChangeForm from "@/components/form/RoleChangeForm";
 
-export default function RoleChangeButton() {
+export default function RoleChangeButton({ userId, refetchProfile }: { userId: string, refetchProfile: () => void }) {
   const [open, setOpen] = useState(false);
 
   return (
     <>
-      <Button
-        onClick={() => setOpen(true)}
-        className="bg-blue-600 text-white hover:bg-blue-700"
-      >
-        Cambiar Rol de Usuario
+      <Button onClick={() => setOpen(true)} className="bg-blue-600 text-white hover:bg-blue-700">
+        Cambiar Rol
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -33,7 +30,7 @@ export default function RoleChangeButton() {
             </button>
           </div>
 
-          <RoleChangeForm onClose={() => setOpen(false)} />
+          <RoleChangeForm userId={userId} onClose={() => setOpen(false)}  refetchProfile={refetchProfile} />
         </DialogContent>
       </Dialog>
     </>

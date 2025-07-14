@@ -6,6 +6,7 @@ interface User {
   id: string;
   email: string;
   name?: string;
+  role?: string;
 }
 
 interface AuthContextType {
@@ -46,7 +47,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               userData = {
                 id: storedUserId,
                 email: '',
-                name: ''
+                name: '',
+                role: ''
               };
             }
           } else {
@@ -54,7 +56,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             userData = {
               id: storedUserId,
               email: '',
-              name: ''
+              name: '',
+              role: ''
             };
           }
           
