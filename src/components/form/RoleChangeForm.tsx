@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import { toast } from "sonner";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -27,7 +26,6 @@ import { Loader2 } from "lucide-react";
 import { useState } from "react";
 
 const formSchema = z.object({
-  userId: z.string().min(1, "El ID del usuario es obligatorio"),
   rol: z.enum(["admin", "profesor", "estudiante"], {
     errorMap: () => ({ message: "Debes seleccionar un rol válido" }),
   }),
@@ -36,16 +34,18 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface Props {
+  userId: string;
   onClose: () => void;
+  refetchProfile: () => void;
 }
 
-export default function RoleChangeForm({ onClose }: Props) {
+
+export default function RoleChangeForm({ userId, onClose, refetchProfile }: Props) {
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      userId: "",
       rol: "estudiante",
     },
   });
@@ -55,7 +55,7 @@ export default function RoleChangeForm({ onClose }: Props) {
       setIsLoading(true);
 
       const res = await axios.post(
-        `https://red-networking-backend.vercel.app/api/users/${values.userId}/cambiar-rol`,
+        `https://red-networking-backend.vercel.app/api/users/${userId}/cambiar-rol`,
         { rol: values.rol }
       );
 
@@ -63,6 +63,7 @@ export default function RoleChangeForm({ onClose }: Props) {
 
       if (res.data.ok) {
         toast.success(res.data.message);
+        refetchProfile(); 
         onClose();
         form.reset();
       } else {
@@ -70,9 +71,10 @@ export default function RoleChangeForm({ onClose }: Props) {
       }
     } catch (err: unknown) {
       setIsLoading(false);
-      const errorMessage = err instanceof Error && 'response' in err 
-        ? (err as { response?: { data?: { error?: string } } }).response?.data?.error || "Error en la solicitud."
-        : "Error en la solicitud.";
+      const errorMessage =
+        err instanceof Error && "response" in err
+          ? (err as { response?: { data?: { error?: string } } }).response?.data?.error || "Error en la solicitud."
+          : "Error en la solicitud.";
       toast.error(errorMessage);
     }
   }
@@ -81,23 +83,6 @@ export default function RoleChangeForm({ onClose }: Props) {
     <>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="userId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-white">ID del Usuario</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    placeholder="Ej: 64f3f..."
-                    className="text-white"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
 
           <FormField
             control={form.control}
