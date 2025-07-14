@@ -1,14 +1,12 @@
 "use client";
 
 interface RatingProps {
-  projectID: string;
   score: number;
   feedback: string;
   onClose: () => void;
 }
 
 export default function ShowRatingPage({
-  projectID,
   score,
   feedback,
   onClose,
@@ -91,8 +89,6 @@ export default function ShowRatingPage({
               <p className="text-gray-200 whitespace-pre-line">{feedback}</p>
             </div>
           </div>
-
- 
         </div>
 
         {/* Botón de cierre */}

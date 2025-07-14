@@ -20,3 +20,20 @@ export type Rating = {
   score: number;
   feedback: string;
 };
+
+interface Teacher {
+  _id: string;
+  name: string;
+}
+
+interface Evaluation {
+  _id: string;
+  projectID: string;
+  teacherID: Teacher;
+  score: number;
+  feedback: string;
+}
+
+export type RatingList = {
+  evaluaciones: Evaluation[];
+};
