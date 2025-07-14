@@ -12,6 +12,7 @@ import axios from "axios";
 import { API_ENDPOINTS } from "@/config/env";
 import DeleteCommentButton from "@/components/admin/DeleteCommentButton";
 import Link from "next/link";
+import { toast } from "sonner";
 
 // Interfaz que representa la estructura de la respuesta de la API para un proyecto.
 export interface ProjectApiResponse {
@@ -184,6 +185,7 @@ export function ProjectCard(props: ProjectCardProps) {
       setCommentsError("Error al cargar los comentarios");
       setComments([]);
       setHasLoadedComments(true);
+      toast.error("Error al cargar los comentarios");
     } finally {
       setIsLoadingComments(false);
     }
@@ -225,9 +227,11 @@ export function ProjectCard(props: ProjectCardProps) {
         setShowCommentInput(false);
       } else {
         console.error("Error al comentar:", res.data.error);
+        toast.error("Error al publicar el comentario");
       }
     } catch (err) {
       console.error("Error de red:", err);
+      toast.error("Error de conexión al publicar comentario");
     } finally {
       setIsSubmittingComment(false);
     }
@@ -248,9 +252,13 @@ export function ProjectCard(props: ProjectCardProps) {
             c._id === commentId ? { ...c, likes: res.data.resultado.likes } : c
           )
         );
+      } else {
+        console.error("Error al actualizar like");
+        toast.error("Error al actualizar like");
       }
     } catch (error) {
       console.error("Error al dar like:", error);
+      toast.error("Error de conexión al dar like");
     }
   };
 
