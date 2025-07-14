@@ -323,9 +323,7 @@ export default function ProyectoPage({
             Título del Proyecto:{" "}
             <span className="text-blue-400">{proyecto.title}</span>
           </h1>
-          {user?.role === "profesor" && (
             <ProjectDropDownActions projectId={id} />
-          )}
           {user?.role === "admin" && (
             <DeleteProjectButton projectId={proyecto._id} adminId={user.id} />
           )}
