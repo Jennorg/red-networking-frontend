@@ -36,6 +36,7 @@ interface Comment {
   _id: string;
   content: string;
   author: string;
+  authorID?: string; // Add authorID field from backend
   authorAvatar?: string;
   date: string;
   likes: string[];
@@ -85,6 +86,7 @@ export default function ProyectoPage({
   const { user, isAuthenticated } = useAuth();
   const [proyecto, setProyecto] = useState<Proyecto | null>(null);
   const [authorNames, setAuthorNames] = useState<string[]>([]);
+  const [commentAuthorNames, setCommentAuthorNames] = useState<{ [key: string]: string }>({});
   const [iaSummary, setIaSummary] = useState<string | null>(null);
   const [isLoadingSummary, setIsLoadingSummary] = useState(false);
   const [summaryError, setSummaryError] = useState<string | null>(null);
@@ -112,7 +114,54 @@ export default function ProyectoPage({
           ? response.data.comentarios
           : [];
         setComments(commentsData);
+        
+        // Obtener nombres de autores de los comentarios
+        if (commentsData.length > 0) {
+          try {
+            // Intentar obtener nombres directamente del backend
+            const authorIds = [...new Set(commentsData.map((comment: Comment) => comment.authorID || comment.author))];
+            console.log('Unique author IDs:', authorIds);
+            
+            const authorNamesMap: { [key: string]: string } = {};
+            
+            // Para cada autor único, intentar obtener su información
+            for (const authorId of authorIds) {
+              if (!authorId || typeof authorId !== 'string') {
+                console.warn(`Invalid authorId: ${authorId}`);
+                authorNamesMap[authorId as string] = "Usuario desconocido";
+                continue;
+              }
+
+              try {
+                const userResponse = await axios.get(
+                  `https://red-networking-backend.vercel.app/api/getUser/${authorId}`,
+                  { timeout: 5000 }
+                );
+                console.log(`User response for ${authorId}:`, userResponse.data);
+                
+                if (userResponse.data && userResponse.data.user) {
+                  authorNamesMap[authorId as string] = userResponse.data.user.name || "Usuario desconocido";
+                } else if (userResponse.data && userResponse.data.name) {
+                  authorNamesMap[authorId as string] = userResponse.data.name;
+                } else {
+                  authorNamesMap[authorId as string] = "Usuario desconocido";
+                }
+              } catch (error: any) {
+                console.error(`Error getting user ${authorId}:`, error);
+                authorNamesMap[authorId as string] = "Usuario desconocido";
+              }
+            }
+            
+            console.log('Final author names map:', authorNamesMap);
+            setCommentAuthorNames(authorNamesMap);
+          } catch (error) {
+            console.error("Error obteniendo nombres de autores de comentarios:", error);
+            // No fallar completamente si hay error obteniendo nombres
+            setCommentAuthorNames({});
+          }
+        }
       } catch (error) {
+        console.error("Error cargando comentarios:", error);
         setCommentsError("Error al cargar los comentarios");
         setComments([]);
       } finally {
@@ -217,7 +266,7 @@ export default function ProyectoPage({
             </AvatarFallback>
           </Avatar>
           <div className="flex-col">
-            <span className="text-blue-400 text-xs">{comment.author}</span>
+            <span className="text-blue-400 text-xs">{commentAuthorNames[comment.authorID || comment.author] || comment.author}</span>
             <span className="text-gray-400 text-xs ml-2">
               {fechaFormateada}
             </span>

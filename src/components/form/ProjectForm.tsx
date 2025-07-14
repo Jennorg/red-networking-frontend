@@ -34,12 +34,11 @@ import { MultiSelect } from "@/components/ui/multiselect";
 import { useEffect, useState } from "react";
 import { useRef } from "react";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 const projectUploadSchema = z.object({
   title: z.string().min(2, { message: "El título es obligatorio" }),
-  authors: z
-    .array(z.string().length(24))
-    .min(1,{ message: "Selecciona al menos un autor" }),
+  coAuthors: z.array(z.string().length(24)), 
   date: z.date({ required_error: "La fecha es obligatoria" }),
   tags: z
     .array(z.string())
@@ -49,7 +48,14 @@ const projectUploadSchema = z.object({
   tools: z
     .array(z.string())
     .min(1, { message: "Selecciona al menos una herramienta" }),
-  image: z.any().optional(),
+  
+  image: z
+    .custom<File>((file) => file instanceof File, {
+      message: "Debes seleccionar una imagen válida y es obligatoria", 
+    })
+    .refine((file) => file.size > 0, {
+      message: "La imagen es obligatoria", 
+    }),
   document: z.any().optional(),
 });
 type ProjectUploadValues = z.infer<typeof projectUploadSchema>;
@@ -69,6 +75,7 @@ interface ProjectUploadFormProps {
 
 export default function ProjectUploadForm({ onSuccess }: ProjectUploadFormProps) {
 
+  const { user } = useAuth(); // ✅ Obtenemos al usuario autenticado
   const [usuarios, setUsuarios] = useState<{ id: string; nombre: string }[]>([]); 
   const imageInputRef = useRef<HTMLInputElement>(null);
   const documentInputRef = useRef<HTMLInputElement>(null);
@@ -78,20 +85,22 @@ export default function ProjectUploadForm({ onSuccess }: ProjectUploadFormProps)
     axios
       .get("https://red-networking-backend.vercel.app/auth/users")
       .then((res) => {
-        const lista = res.data.users.map((u: { _id: string; name: string }) => ({
-          id: u._id,
-          nombre: u.name,
-        }));
+        const lista = res.data.users
+          .filter((u: { _id: string }) => u._id !== user?.id) // excluye al logueado
+          .map((u: { _id: string; name: string }) => ({
+            id: u._id,
+            nombre: u.name,
+          }));
         setUsuarios(lista);
       })
       .catch((err) => console.error("Error cargando usuarios:", err));
-  }, []);
+  }, [user]);
 
   const form = useForm<ProjectUploadValues>({
     resolver: zodResolver(projectUploadSchema),
     defaultValues: {
       title: "",
-      authors: [],
+      coAuthors: [],
       date: undefined,
       tags: [],
       description: "",
@@ -125,6 +134,7 @@ async function onSubmit(values: ProjectUploadValues) {
         date: values.date.toISOString(), 
         image: imageBase64,
         document: documentBase64,
+        authors: [user?.id, ...values.coAuthors], 
       };
 
      const res = await axios.post("https://red-networking-backend.vercel.app/api/subida_proyecto", payload);  
@@ -159,6 +169,12 @@ async function onSubmit(values: ProjectUploadValues) {
       <h2 className="text-3xl font-bold text-white mb-16 mt-5 text-center">
         Formulario Nuevo Proyecto
       </h2>
+      
+      {user && (
+        <p className="text-white mb-6 text-sm text-center">
+          <strong>Autor principal:</strong> {user.name || user.email}
+        </p>
+      )}
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
@@ -185,22 +201,22 @@ async function onSubmit(values: ProjectUploadValues) {
             )}
           />
 
-          {/* Autores */}
+          {/* Co-Autores */}
           <div className="flex flex-col md:flex-row gap-4">
             <FormField
               control={form.control}
-              name="authors"
+              name="coAuthors"
               render={({ field }) => (
                 <FormItem className="flex-1">
                   <FormLabel className="text-white">
-                    Autores del Proyecto
+                    Co-autores (opcional)
                   </FormLabel>
                   <FormControl>
                     <MultiSelect
                     options={usuarios.map((u) => ({ label: u.nombre, value: u.id }))}
                     value={field.value ?? []}
                     onChange={field.onChange}
-                    placeholder="Selecciona autores"
+                    placeholder="Selecciona co-autores"
                   />
                   </FormControl>
                   <FormMessage />
