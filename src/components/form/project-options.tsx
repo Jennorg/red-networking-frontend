@@ -26,7 +26,6 @@ export const TOOL_OPTIONS = [
   { label: "TensorFlow", value: "tensorflow" },
   { label: "Node.js", value: "nodejs" },
   { label: "Docker", value: "docker" },
-  { label: "AWS", value: "aws" },
   { label: "Azure", value: "azure" },
   { label: "Angular", value: "angular" }, 
   { label: "PostgreSQL", value: "postgresql" },
