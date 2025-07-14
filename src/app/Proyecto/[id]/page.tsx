@@ -167,8 +167,6 @@ export default function ProyectoPage({
               }
             }
             
-
-            
             console.log('Final author names map:', authorNamesMap);
             setCommentAuthorNames(authorNamesMap);
           } catch (error) {
@@ -521,8 +519,8 @@ export default function ProyectoPage({
                       {tag}
                     </span>
                   );
-                })
-              ) : (
+                }))
+              : (
                 <span className="text-gray-400 text-sm">Sin etiquetas</span>
               )}
             </div>
@@ -764,4 +762,4 @@ export default function ProyectoPage({
       </div>
     </DashboardLayout>
   );
-} 
+}

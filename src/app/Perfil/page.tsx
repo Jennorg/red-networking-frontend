@@ -841,7 +841,7 @@ export default function Perfil() {
             </Card>
 
             {/* Configuración Rápida */}
-            <Card className="bg-[#232733] border-gray-700">
+            {/* <Card className="bg-[#232733] border-gray-700">
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2">
                   <Settings className="w-5 h-5" />
@@ -866,7 +866,7 @@ export default function Perfil() {
                   Ayuda
                 </Button>
               </CardContent>
-            </Card>
+            </Card> */}
           </div>
         </div>
       </div>
