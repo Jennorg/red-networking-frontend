@@ -6,6 +6,7 @@ import {
   MoreHorizontal,
   ScrollText,
   Star,
+  Trash2
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "../ui/button";
@@ -28,12 +29,20 @@ import ShowRatingPage from "@/app/Proyecto/evaluacion/page";
 import { CreateProjectRatingForm } from "../form/CreateProjectRatingForm";
 import { CreatePuntuacionForm } from "../form/CreatePuntuacionProjectForm";
 import RatingListPage from "./RatingList";
+import DeleteProject from "@/components/admin/DeleteProject";
 
-const ProjectDropDownActions = ({ projectId }: { projectId: string }) => {
+const ProjectDropDownActions = ({
+  projectId,
+  isAuthor,
+}: {
+  projectId: string;
+  isAuthor: boolean;
+}) => {
   const [openRating, setOpenRating] = useState(false);
   const [openWatchRating, setOpenWatchRating] = useState(false);
   const [openListRating, setOpenListRating] = useState(false);
   const [openPuntuacion, setOpenPuntuacion] = useState(false);
+  const [openDelete, setOpenDelete] = useState(false);
   const { user } = useAuth();
 
   const value = {
@@ -81,9 +90,19 @@ const ProjectDropDownActions = ({ projectId }: { projectId: string }) => {
           </DropdownMenuItem>
 
           <DropdownMenuItem onClick={() => setOpenListRating(true)}>
-            <ScrollText className="size-5 text-red-500" />
+            <ScrollText className="size-5 text-blue-500" />
             <p className="pl-2">Ver calificaciones</p>
           </DropdownMenuItem>
+
+          {(user?.role === "admin" || isAuthor) && (
+            <DropdownMenuItem
+              onClick={() => setOpenDelete(true)}
+              className="hover:bg-gray-700 focus:bg-gray-300"
+            >
+              <Trash2 className="size-5 text-red-500" />
+              <p className="pl-2">Eliminar Proyecto</p>
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -161,6 +180,14 @@ const ProjectDropDownActions = ({ projectId }: { projectId: string }) => {
           </DialogHeader>
         </DialogContent>
       </Dialog>
+      {/* ELIMINAR PROYECTO PARA ADMINISTRADORES Y USUARIOS PROPIETARIOS*/}
+      <DeleteProject
+        projectId={projectId}
+        userId={user?.id || ""}
+        userRole={user?.role || ""}
+        open={openDelete}
+        onOpenChange={setOpenDelete}
+      />
     </>
   );
 };

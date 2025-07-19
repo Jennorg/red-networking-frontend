@@ -1,18 +1,16 @@
 "use client";
 /// <reference types="react" />
 import React from "react";
-import { notFound } from "next/navigation";
 import axios from "axios";
 import { API_ENDPOINTS } from "@/config/env";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import Image from "next/image";
-import { Github, FileText, Download } from "lucide-react";
+import { Github, Download } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Heart, MessageCircleMore, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useState } from "react";
-import DeleteProjectButton from "@/components/admin/DeleteProjectButton";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import ProjectDropDownActions from "@/components/misc/ProjectDropDownActions";
@@ -71,7 +69,6 @@ async function getAuthorNames(authorIds: string[]): Promise<string[]> {
     return authorIds.map(() => "Usuario desconocido");
   }
 }
-
 export default function ProyectoPage({
   params,
 }: {
@@ -94,7 +91,7 @@ export default function ProyectoPage({
   const [imageLoading, setImageLoading] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [isLoadingProject, setIsLoadingProject] = useState(true);
-
+  const isAuthor = !!proyecto?.authors?.includes(user?.id ?? "");
   const role = user?.role || "";
   useEffect(() => {
     const fetchProyecto = async () => {
@@ -402,10 +399,7 @@ export default function ProyectoPage({
             Título del Proyecto:{" "}
             <span className="text-blue-400">{proyecto.title}</span>
           </h1>
-            <ProjectDropDownActions projectId={id} />
-          {user?.role === "admin" && (
-            <DeleteProjectButton projectId={proyecto._id} adminId={user.id} />
-          )}
+            <ProjectDropDownActions projectId={id} isAuthor={isAuthor} />
         </div>
 
         {/* Autores y Fecha */}
