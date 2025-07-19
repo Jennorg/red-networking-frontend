@@ -39,6 +39,7 @@ export interface Comment {
   date: string;
   likes: string[]; // en lugar de number
   replies?: Comment[];
+  createdAt?: string; // Added createdAt field
 }
 
 // Interfaz para las props del componente ProjectCard,
@@ -78,10 +79,10 @@ export function ProjectCard(props: ProjectCardProps) {
     isFavorited = false,
     onToggleFavorite,
     isFavoriteLoading = false,
-    favoritos,
+    // favoritos, // unused
   } = props;
   const { user } = useAuth(); // asume user.id está disponible
-  const username = authors.length > 0 ? authors[0] : "Desconocido";
+  // const username = authors.length > 0 ? authors[0] : "Desconocido"; // unused
   const router = useRouter();
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
@@ -104,12 +105,10 @@ export function ProjectCard(props: ProjectCardProps) {
         return;
       }
       try {
-        const res = await axios.get(
-          "https://red-networking-backend.vercel.app/auth/users"
-        );
-        const users = res.data.users || [];
+        const res = await axios.get("https://red-networking-backend.vercel.app/auth/users");
+        const users: { _id: string; name: string }[] = res.data.users || [];
         const names = authors.map((id) => {
-          const user = users.find((u: any) => u._id === id);
+          const user = users.find((u) => u._id === id);
           return user ? user.name : "Usuario desconocido";
         });
         setAuthorNames(names);
@@ -173,7 +172,7 @@ export function ProjectCard(props: ProjectCardProps) {
               } else {
                 authorNamesMap[authorId as string] = "Usuario desconocido";
               }
-            } catch (error: any) {
+            } catch (error: unknown) {
               console.error(`Error getting user ${authorId}:`, error);
               authorNamesMap[authorId as string] = "Usuario desconocido";
             }
@@ -293,7 +292,7 @@ export function ProjectCard(props: ProjectCardProps) {
 
   const renderComment = (comment: Comment) => {
     // Usar createdAt si existe, si no, usar date
-    const dateString = (comment as any).createdAt || comment.date;
+    const dateString = comment.createdAt || comment.date;
     let fechaFormateada = "Fecha no disponible";
     if (dateString) {
       const dateObj = new Date(dateString);

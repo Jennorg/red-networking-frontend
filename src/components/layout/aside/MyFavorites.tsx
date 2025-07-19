@@ -12,7 +12,6 @@ import { Loader2, RefreshCw } from "lucide-react";
 interface FavoriteProject {
   _id: string;
   title: string;
-  // Add other properties as needed
 }
 
 const MyFavorites = () => {

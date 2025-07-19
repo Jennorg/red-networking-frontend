@@ -2,7 +2,6 @@
 
 import { Menu, X, User } from "lucide-react";
 import { useState } from "react";
-import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import MyFavorites from "./MyFavorites";
 import MyProyects from "./MyProyects";

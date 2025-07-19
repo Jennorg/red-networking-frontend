@@ -3,14 +3,14 @@ import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { ProjectCard } from "@/components/card/ProjectCard";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { ProjectCategorySelector } from "@/components/misc/ProjectCategorySelector";
 import { SmartPagination } from "@/components/ui/smart-pagination";
 import { useAuth } from "@/contexts/AuthContext";
 import { API_ENDPOINTS } from "@/config/env";
+import { ProjectApiResponse } from "@/components/card/ProjectCard";
 
 export default function Ranking() {
   const { user, isAuthenticated } = useAuth();
-  const [rankingData, setRankingData] = useState([]);
+  const [rankingData, setRankingData] = useState<(ProjectApiResponse & { stars: number })[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [favoritedProjects, setFavoritedProjects] = useState<Set<string>>(new Set());
@@ -26,7 +26,7 @@ export default function Ranking() {
         const resultado = response.data;
 
         if (resultado.proceso) {
-          const projectsWithStars = resultado.data.map((project: any) => ({
+          const projectsWithStars = resultado.data.map((project: ProjectApiResponse & { favoritos?: number }) => ({
             ...project,
             stars: project.favoritos ?? 0,
           }));
@@ -35,14 +35,14 @@ export default function Ranking() {
           
           // Inicializar contadores visuales de estrellas con los valores actuales
           const initialStarCounts: { [key: string]: number } = {};
-          projectsWithStars.forEach((project: any) => {
+          projectsWithStars.forEach((project) => {
             initialStarCounts[project._id] = project.stars || 0;
           });
           setVisualStarCounts(prev => ({ ...prev, ...initialStarCounts }));
         } else {
           console.error("Error al obtener ranking:", resultado.message);
         }
-      } catch (error) {
+      } catch (error: unknown) {
         console.error("Error al conectar con el backend:", error);
       } finally {
         setIsLoading(false);
@@ -78,13 +78,13 @@ export default function Ranking() {
 
       // Extraer los IDs de los proyectos favoritos
       const favoritesData = response.data.favoritos || response.data || [];
-      const favoriteIds = Array.isArray(favoritesData) 
-        ? favoritesData.map((fav: any) => fav._id || fav.id || fav)
+      const favoriteIds: string[] = Array.isArray(favoritesData) 
+        ? favoritesData.map((fav: { _id?: string; id?: string }) => typeof fav === 'string' ? fav : fav._id || fav.id || '')
         : [];
       
       console.log('User favorites:', favoriteIds);
       setFavoritedProjects(new Set(favoriteIds));
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error fetching user favorites:", error);
       setFavoritedProjects(new Set());
     }
@@ -131,7 +131,7 @@ export default function Ranking() {
         notifyFavoritesChange(); // Notify sidebar
         await fetchUserFavorites();
         return; // Success, exit early
-      } catch (firstError) {
+      } catch (firstError: unknown) {
         console.log("First endpoint failed, trying alternative:", firstError);
         
         // Try alternative endpoint structure
@@ -157,7 +157,7 @@ export default function Ranking() {
           notifyFavoritesChange(); // Notify sidebar
           await fetchUserFavorites();
           return; // Success, exit early
-        } catch (secondError) {
+        } catch (secondError: unknown) {
           console.log("Alternative endpoint also failed:", secondError);
           throw secondError; // Re-throw to be caught by outer catch
         }
@@ -210,7 +210,7 @@ export default function Ranking() {
         notifyFavoritesChange(); // Notify sidebar
         await fetchUserFavorites();
         return; // Success, exit early
-      } catch (firstError) {
+      } catch (firstError: unknown) {
         console.log("First endpoint failed, trying alternative:", firstError);
         
         // Try alternative endpoint structure
@@ -240,12 +240,12 @@ export default function Ranking() {
           notifyFavoritesChange(); // Notify sidebar
           await fetchUserFavorites();
           return; // Success, exit early
-        } catch (secondError) {
+        } catch (secondError: unknown) {
           console.log("Alternative endpoint also failed:", secondError);
           throw secondError; // Re-throw to be caught by outer catch
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error removing project from favorites:", error);
     } finally {
       setFavoriteLoading(prev => {
@@ -303,7 +303,7 @@ export default function Ranking() {
             {isLoading ? (
               <p className="text-white text-center">Cargando ranking...</p>
             ) : rankingData.length > 0 ? (
-              rankingData.map((project: any, index: number) => (
+              rankingData.map((project: ProjectApiResponse & { stars: number }, index: number) => (
                 <ProjectCard
                   key={`${project._id}-${index}`}
                   {...project}

@@ -1,18 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import DeleteUserButton from "@/components/admin/DeleteUserButton";
 import RoleChangeButton from "@/components/admin/RoleChangeButton";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAuthenticatedRequest } from "@/hooks/useAuthenticatedRequest";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { 
   User, 
@@ -24,12 +22,7 @@ import {
   Star, 
   Eye, 
   Heart, 
-  Settings,
-  Shield,
-  Bell,
-  Palette,
   Globe,
-  BookOpen,
   Code,
   Award,
   Loader2
@@ -65,12 +58,11 @@ interface UserProfile {
   github?: string;
   avatar?: string;
   createdAt: string;
-  role?: string; // Agregar campo de rol
+  role?: string; 
 }
 
 export default function Perfil() {
   const { user, isAuthenticated } = useAuth();
-  const { get, put } = useAuthenticatedRequest();
   const router = useRouter();
   const searchParams = useSearchParams();
   const targetUserId = searchParams.get('userId');
@@ -94,8 +86,8 @@ export default function Perfil() {
   const userIdToShow = targetUserId || user?.id;
   const isOwnProfile = !targetUserId || targetUserId === user?.id;
 
-  // Cargar datos del perfil usando endpoints existentes
-  const loadProfileData = async () => {
+  // Memoize loadProfileData to fix useEffect dependency warning
+  const loadProfileData = useCallback(async () => {
     if (!userIdToShow) return;
     
     console.log('Loading profile data for userId:', userIdToShow);
@@ -168,12 +160,12 @@ export default function Perfil() {
       }
       
       // Obtener proyectos del usuario usando el endpoint correcto
-      let userProjects = [];
+      let userProjects: UserProject[] = [];
       try {
         console.log('Fetching projects for userId:', userIdToShow);
         const projectsResponse = await axios.get(`https://red-networking-backend.vercel.app/api/usuario_projects/${userIdToShow}`);
         console.log('Projects response:', projectsResponse.data);
-        let rawData = projectsResponse.data;
+        const rawData = projectsResponse.data;
         
         // Manejar diferentes estructuras de respuesta
         if (Array.isArray(rawData)) {
@@ -196,7 +188,7 @@ export default function Perfil() {
           const allProjectsData = allProjectsResponse.data?.data?.data || allProjectsResponse.data?.data || allProjectsResponse.data?.proyectos || allProjectsResponse.data || [];
           
           // Filtrar proyectos del usuario objetivo
-          userProjects = allProjectsData.filter((project: any) => 
+          userProjects = allProjectsData.filter((project: UserProject & { authors?: string[] }) => 
             project.authors && project.authors.includes(userIdToShow)
           );
         }
@@ -206,8 +198,8 @@ export default function Perfil() {
           userProjects = [];
         }
         
-        setUserProjects(userProjects.map((project: any) => ({
-          _id: project._id || project.id,
+        setUserProjects(userProjects.map((project: UserProject & { id?: string }) => ({
+          _id: project._id || project.id || '',
           title: project.title,
           description: project.description || 'Sin descripción disponible',
           tools: project.tools || [],
@@ -216,7 +208,7 @@ export default function Perfil() {
           rating: project.rating || 0,
           repositoryLink: project.repositoryLink || ''
         })));
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Error obteniendo proyectos del usuario:', error);
         
         // Intentar método alternativo si falla el endpoint específico
@@ -224,7 +216,7 @@ export default function Perfil() {
           const allProjectsResponse = await axios.get('https://red-networking-backend.vercel.app/api/pagina_principal');
           const allProjectsData = allProjectsResponse.data?.data?.data || allProjectsResponse.data?.data || allProjectsResponse.data?.proyectos || allProjectsResponse.data || [];
           
-          userProjects = allProjectsData.filter((project: any) => 
+          userProjects = allProjectsData.filter((project: UserProject & { authors?: string[] }) => 
             project.authors && project.authors.includes(userIdToShow)
           );
           
@@ -233,8 +225,8 @@ export default function Perfil() {
             userProjects = [];
           }
           
-          setUserProjects(userProjects.map((project: any) => ({
-            _id: project._id || project.id,
+          setUserProjects(userProjects.map((project: UserProject & { id?: string }) => ({
+            _id: project._id || project.id || '',
             title: project.title,
             description: project.description || 'Sin descripción disponible',
             tools: project.tools || [],
@@ -243,7 +235,7 @@ export default function Perfil() {
             rating: project.rating || 0,
             repositoryLink: project.repositoryLink || ''
           })));
-        } catch (altError: any) {
+        } catch (altError: unknown) {
           console.error('Error en método alternativo:', altError);
           setUserProjects([]);
         }
@@ -251,7 +243,7 @@ export default function Perfil() {
       
       // Calcular estadísticas básicas con los datos reales
       const projectsCount = userProjects.length;
-      const totalViews = userProjects.reduce((sum: number, project: any) => sum + (project.views || 0), 0);
+      const totalViews = userProjects.reduce((sum: number, project: UserProject) => sum + (project.views || 0), 0);
       
       setUserStats({
         projectsCreated: projectsCount,
@@ -295,7 +287,7 @@ export default function Perfil() {
         });
       }
       
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error cargando datos del perfil:', error);
       toast.error('Error al cargar los datos del perfil');
       
@@ -326,13 +318,14 @@ export default function Perfil() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [userIdToShow, isOwnProfile, user]);
 
+  // Update useEffect to include loadProfileData
   useEffect(() => {
     if (userIdToShow) {
       loadProfileData();
     }
-  }, [userIdToShow]);
+  }, [userIdToShow, loadProfileData]);
 
   // Obtener ratings reales de los proyectos
   useEffect(() => {
@@ -377,7 +370,7 @@ export default function Perfil() {
       
       // Preparar los datos para el backend
       // El backend espera los links en un array: [website, github_url, github_username]
-      let links = ['', '', ''];
+      const links = ['', '', ''];
       
       // Sitio web en posición 0
       links[0] = editForm.website || '';
@@ -450,11 +443,15 @@ export default function Perfil() {
         console.error('Profile update failed:', response.data);
         toast.error(response.data.error || 'Error al actualizar el perfil');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error actualizando perfil:', error);
-      console.error('Error response:', error.response?.data);
-      const errorMessage = error.response?.data?.error || 'Error al actualizar el perfil';
-      toast.error(errorMessage);
+      if (axios.isAxiosError && axios.isAxiosError(error)) {
+        console.error('Error response:', error.response?.data);
+        const errorMessage = error.response?.data?.error || 'Error al actualizar el perfil';
+        toast.error(errorMessage);
+      } else {
+        toast.error('Error al actualizar el perfil');
+      }
     } finally {
       setIsSaving(false);
     }
