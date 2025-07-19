@@ -53,7 +53,7 @@ export interface ProjectCardProps extends ProjectApiResponse {
   isFavorited?: boolean;
   onToggleFavorite?: () => void;
   isFavoriteLoading?: boolean;
-  favoritos?: number
+  favoritos?: number;
 }
 
 export function ProjectCard(props: ProjectCardProps) {
@@ -92,7 +92,9 @@ export function ProjectCard(props: ProjectCardProps) {
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [localStarCount, setLocalStarCount] = useState(stars || 0);
   const [authorNames, setAuthorNames] = useState<string[]>([]);
-  const [commentAuthorNames, setCommentAuthorNames] = useState<{ [key: string]: string }>({});
+  const [commentAuthorNames, setCommentAuthorNames] = useState<{
+    [key: string]: string;
+  }>({});
 
   useEffect(() => {
     // Obtener nombres de autores desde el backend
@@ -102,7 +104,9 @@ export function ProjectCard(props: ProjectCardProps) {
         return;
       }
       try {
-        const res = await axios.get("https://red-networking-backend.vercel.app/auth/users");
+        const res = await axios.get(
+          "https://red-networking-backend.vercel.app/auth/users"
+        );
         const users = res.data.users || [];
         const names = authors.map((id) => {
           const user = users.find((u: any) => u._id === id);
@@ -124,25 +128,31 @@ export function ProjectCard(props: ProjectCardProps) {
 
     try {
       const response = await axios.get(API_ENDPOINTS.PROJECT_COMMENTS(_id));
-      console.log('Comentarios cargados:', response.data);
+      console.log("Comentarios cargados:", response.data);
       // Forzar que siempre sea un array
       const commentsData = Array.isArray(response.data.comentarios)
         ? response.data.comentarios
         : [];
       setComments(commentsData);
-      
+
       // Obtener nombres de autores de los comentarios
       if (commentsData.length > 0) {
         try {
           // Intentar obtener nombres directamente del backend
-          const authorIds = [...new Set(commentsData.map((comment: Comment) => comment.authorID || comment.author))];
-          console.log('Unique author IDs:', authorIds);
-          
+          const authorIds = [
+            ...new Set(
+              commentsData.map(
+                (comment: Comment) => comment.authorID || comment.author
+              )
+            ),
+          ];
+          console.log("Unique author IDs:", authorIds);
+
           const authorNamesMap: { [key: string]: string } = {};
-          
+
           // Para cada autor único, intentar obtener su información
           for (const authorId of authorIds) {
-            if (!authorId || typeof authorId !== 'string') {
+            if (!authorId || typeof authorId !== "string") {
               console.warn(`Invalid authorId: ${authorId}`);
               authorNamesMap[authorId as string] = "Usuario desconocido";
               continue;
@@ -154,9 +164,10 @@ export function ProjectCard(props: ProjectCardProps) {
                 { timeout: 5000 }
               );
               console.log(`User response for ${authorId}:`, userResponse.data);
-              
+
               if (userResponse.data && userResponse.data.user) {
-                authorNamesMap[authorId as string] = userResponse.data.user.name || "Usuario desconocido";
+                authorNamesMap[authorId as string] =
+                  userResponse.data.user.name || "Usuario desconocido";
               } else if (userResponse.data && userResponse.data.name) {
                 authorNamesMap[authorId as string] = userResponse.data.name;
               } else {
@@ -167,18 +178,19 @@ export function ProjectCard(props: ProjectCardProps) {
               authorNamesMap[authorId as string] = "Usuario desconocido";
             }
           }
-          
 
-          
-          console.log('Final author names map:', authorNamesMap);
+          console.log("Final author names map:", authorNamesMap);
           setCommentAuthorNames(authorNamesMap);
         } catch (error) {
-          console.error("Error obteniendo nombres de autores de comentarios:", error);
+          console.error(
+            "Error obteniendo nombres de autores de comentarios:",
+            error
+          );
           // No fallar completamente si hay error obteniendo nombres
           setCommentAuthorNames({});
         }
       }
-      
+
       setHasLoadedComments(true);
     } catch (error) {
       console.error("Error cargando comentarios:", error);
@@ -265,16 +277,16 @@ export function ProjectCard(props: ProjectCardProps) {
   // Función para manejar el toggle de favorito con actualización inmediata del contador
   const handleToggleFavorite = () => {
     if (!onToggleFavorite) return;
-    
+
     // Actualizar inmediatamente el contador local
     if (isFavorited) {
       // Si está favorito, al hacer clic lo quitamos, entonces restamos 1
-      setLocalStarCount(prev => Math.max(0, prev - 1));
+      setLocalStarCount((prev) => Math.max(0, prev - 1));
     } else {
       // Si no está favorito, al hacer clic lo agregamos, entonces sumamos 1
-      setLocalStarCount(prev => prev + 1);
+      setLocalStarCount((prev) => prev + 1);
     }
-    
+
     // Llamar a la función original
     onToggleFavorite();
   };
@@ -290,7 +302,10 @@ export function ProjectCard(props: ProjectCardProps) {
       }
     }
     return (
-      <Card key={comment._id} className="bg-gray-800 border border-gray-700 mb-3">
+      <Card
+        key={comment._id}
+        className="bg-gray-800 border border-gray-700 mb-3"
+      >
         <CardHeader className="pb-2">
           <CardTitle className="flex justify-between items-center text-sm">
             <div className="flex items-center gap-2">
@@ -306,15 +321,19 @@ export function ProjectCard(props: ProjectCardProps) {
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col">
-                <span className="text-blue-400 text-xs">{commentAuthorNames[comment.authorID || comment.author] || comment.author}</span>
+                <span className="text-blue-400 text-xs">
+                  {commentAuthorNames[comment.authorID || comment.author] ||
+                    comment.author}
+                </span>
                 <span className="text-gray-400 text-xs">{fechaFormateada}</span>
               </div>
             </div>
 
-            {user?.role === "admin" && (
+            {(user?.role === "admin" || comment.authorID === user?.id) && (
               <DeleteCommentButton
                 commentId={comment._id}
-                adminId={user.id}
+                userId={user?.id || ""}
+                userRole={user?.role || ""}
                 onDeleted={() =>
                   setComments((prev) =>
                     prev.filter((c) => c._id !== comment._id)
@@ -362,21 +381,27 @@ export function ProjectCard(props: ProjectCardProps) {
                 </span>
               )}
               <Avatar className="w-8 h-8">
-                <AvatarImage src={avatarURL} alt={`Avatar de ${authorNames[0] || "Desconocido"}`} />
+                <AvatarImage
+                  src={avatarURL}
+                  alt={`Avatar de ${authorNames[0] || "Desconocido"}`}
+                />
                 <AvatarFallback>
-                  {authorNames[0] ? authorNames[0].substring(0, 2).toUpperCase() : "CN"}
+                  {authorNames[0]
+                    ? authorNames[0].substring(0, 2).toUpperCase()
+                    : "CN"}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-col">
                 <h1 className="text-blue-400 mb-1">{title}</h1>
                 <h2 className="text-gray-400 font-light">
                   {authorNames.map((name, idx) => (
-                    <Link 
-                      key={idx} 
+                    <Link
+                      key={idx}
                       href={`/Perfil?userId=${authors[idx]}`}
                       className="hover:text-blue-400 transition-colors cursor-pointer"
                     >
-                      @{name}{idx < authorNames.length - 1 ? ", " : ""}
+                      @{name}
+                      {idx < authorNames.length - 1 ? ", " : ""}
                     </Link>
                   ))}
                 </h2>
@@ -392,12 +417,12 @@ export function ProjectCard(props: ProjectCardProps) {
                 {isFavoriteLoading ? (
                   <Loader2 className="size-5 animate-spin text-yellow-400" />
                 ) : (
-                  <Star 
+                  <Star
                     className={`size-5 ${
-                      isFavorited 
-                        ? "text-yellow-400 fill-yellow-400" 
+                      isFavorited
+                        ? "text-yellow-400 fill-yellow-400"
                         : "text-gray-300 hover:text-yellow-400"
-                    }`} 
+                    }`}
                   />
                 )}
                 <p className="font-light"> {localStarCount}</p>

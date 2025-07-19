@@ -2,37 +2,56 @@
 
 import { useState } from "react";
 import axios from "axios";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Loader2, Trash2 } from "lucide-react";
 
 interface DeleteCommentButtonProps {
   commentId: string;
-  adminId: string;
+  userId: string;
+  userRole: string;
   onDeleted: () => void;
 }
 
-export default function DeleteCommentButton({ commentId, adminId, onDeleted }: DeleteCommentButtonProps) {
+export default function DeleteCommentButton({
+  commentId,
+  userId,
+  userRole,
+  onDeleted,
+}: DeleteCommentButtonProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   const handleDelete = async () => {
     setLoading(true);
+    const endpoint =
+      userRole === "admin"
+        ? `https://red-networking-backend.vercel.app/api/comment/${commentId}/${userId}`
+        : `https://red-networking-backend.vercel.app/api/comment-autor/${commentId}/${userId}`;
     try {
-      const response = await axios.delete(
-        `https://red-networking-backend.vercel.app/api/comment/${commentId}/${adminId}`
-      );
+      const response = await axios.delete(endpoint);
       if (response.data.ok) {
         toast.success("Comentario eliminado exitosamente.");
         onDeleted();
       } else {
-        toast.error(response.data.error || "No se pudo eliminar el comentario.");
+        toast.error(
+          response.data.error || "No se pudo eliminar el comentario."
+        );
       }
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || "Error al eliminar el comentario.");
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        toast.error(
+          error.response?.data?.error || "Error al eliminar el comentario."
+        );
+      } else {
+        toast.error("Error inesperado al eliminar el comentario.");
+      }
     } finally {
       setLoading(false);
       setOpen(false);
@@ -56,10 +75,14 @@ export default function DeleteCommentButton({ commentId, adminId, onDeleted }: D
             <DialogTitle>¿Eliminar comentario?</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-gray-300">
-            Esta acción no se puede deshacer. El comentario será eliminado permanentemente.
+            Esta acción no se puede deshacer. El comentario será eliminado
+            permanentemente.
           </p>
           <div className="flex justify-end gap-3 mt-4">
-            <Button onClick={() => setOpen(false)} className="text-black bg-white hover:bg-gray-200">
+            <Button
+              onClick={() => setOpen(false)}
+              className="text-black bg-white hover:bg-gray-200"
+            >
               Cancelar
             </Button>
             <Button
@@ -68,7 +91,11 @@ export default function DeleteCommentButton({ commentId, adminId, onDeleted }: D
               disabled={loading}
               className="bg-red-600 hover:bg-red-700"
             >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Eliminar"}
+              {loading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                "Eliminar"
+              )}
             </Button>
           </div>
         </DialogContent>
