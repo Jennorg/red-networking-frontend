@@ -91,38 +91,14 @@ export default function Signup() {
     setPasswordRequirements(requirements);
   }, [password]);
 
-  async function onSubmit(values: FormValues) {
-    try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: values.name,
-          email: values.email,
-          password: values.password,
-          born: values.birthdate.toISOString(),
-        }),
-      });
-
-      const result = await response.json();
-
-      if (result.proceso) {
-        // Redirigir al login después del registro exitoso
-        window.location.href = "/Login";
-      } else {
-        console.error("Error en el registro:", result.message);
-      }
-    } catch (error) {
-      console.error("Error de conexión:", error);
-    }
+  function onSubmit(values: FormValues) {
+    console.log(values);
   }
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-[#161B22]">
-      <div className="flex-[3] flex flex-col justify-center items-center px-8 py-6 mx-6">
-        <Image src="/uneg-logo.png" alt="UNEG" width={80} height={80} />
+      <div className="flex-[3] flex flex-col justify-center items-center px-8 py-10 mx-6">
+        <Image src="/pngs/uneg.png" alt="UNEG" width={80} height={80} />
         <h1 className="text-3xl font-bold mt-5 text-white">Registro</h1>
         <p className="text-sm text-white mt-2">
           Regístrate y disfruta de un mundo de posibilidades

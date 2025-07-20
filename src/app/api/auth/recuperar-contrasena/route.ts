@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     // Hacer la petición al backend
     const response = await fetch(
       `${
-        process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001"
+        process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000"
       }/auth/recuperar-contrasena`,
       {
         method: "POST",
