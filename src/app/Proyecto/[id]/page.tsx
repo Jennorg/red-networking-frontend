@@ -16,6 +16,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import ProjectDropDownActions from "@/components/misc/ProjectDropDownActions";
 import { toast } from "sonner";
+import Link from "next/link";
 
 interface Proyecto {
   _id: string;
@@ -61,7 +62,7 @@ async function getAuthorNames(authorIds: string[]): Promise<string[]> {
       "https://red-networking-backend.vercel.app/auth/users"
     );
     const users: { _id: string; name: string }[] = response.data.users || [];
-    
+
     return authorIds.map((id) => {
       const user = users.find((u) => u._id === id);
       return user ? user.name : "Usuario desconocido";
@@ -86,7 +87,9 @@ export default function ProyectoPage({
   const { user, isAuthenticated } = useAuth();
   const [proyecto, setProyecto] = useState<Proyecto | null>(null);
   const [authorNames, setAuthorNames] = useState<string[]>([]);
-  const [commentAuthorNames, setCommentAuthorNames] = useState<{ [key: string]: string }>({});
+  const [commentAuthorNames, setCommentAuthorNames] = useState<{
+    [key: string]: string;
+  }>({});
   const [iaSummary, setIaSummary] = useState<string | null>(null);
   const [isLoadingSummary, setIsLoadingSummary] = useState(false);
   const [summaryError, setSummaryError] = useState<string | null>(null);
@@ -120,26 +123,32 @@ export default function ProyectoPage({
     const fetchComments = async () => {
       setIsLoadingComments(true);
       setCommentsError(null);
-      
+
       try {
         const response = await axios.get(API_ENDPOINTS.PROJECT_COMMENTS(id));
         const commentsData = Array.isArray(response.data.comentarios)
           ? response.data.comentarios
           : [];
         setComments(commentsData);
-        
+
         // Obtener nombres de autores de los comentarios
         if (commentsData.length > 0) {
           try {
             // Intentar obtener nombres directamente del backend
-            const authorIds = [...new Set(commentsData.map((comment: Comment) => comment.authorID || comment.author))];
-            console.log('Unique author IDs:', authorIds);
-            
+            const authorIds = [
+              ...new Set(
+                commentsData.map(
+                  (comment: Comment) => comment.authorID || comment.author
+                )
+              ),
+            ];
+            console.log("Unique author IDs:", authorIds);
+
             const authorNamesMap: { [key: string]: string } = {};
-            
+
             // Para cada autor único, intentar obtener su información
             for (const authorId of authorIds) {
-              if (!authorId || typeof authorId !== 'string') {
+              if (!authorId || typeof authorId !== "string") {
                 console.warn(`Invalid authorId: ${authorId}`);
                 authorNamesMap[authorId as string] = "Usuario desconocido";
                 continue;
@@ -150,10 +159,14 @@ export default function ProyectoPage({
                   `https://red-networking-backend.vercel.app/api/getUser/${authorId}`,
                   { timeout: 5000 }
                 );
-                console.log(`User response for ${authorId}:`, userResponse.data);
-                
+                console.log(
+                  `User response for ${authorId}:`,
+                  userResponse.data
+                );
+
                 if (userResponse.data && userResponse.data.user) {
-                  authorNamesMap[authorId as string] = userResponse.data.user.name || "Usuario desconocido";
+                  authorNamesMap[authorId as string] =
+                    userResponse.data.user.name || "Usuario desconocido";
                 } else if (userResponse.data && userResponse.data.name) {
                   authorNamesMap[authorId as string] = userResponse.data.name;
                 } else {
@@ -164,11 +177,14 @@ export default function ProyectoPage({
                 authorNamesMap[authorId as string] = "Usuario desconocido";
               }
             }
-            
-            console.log('Final author names map:', authorNamesMap);
+
+            console.log("Final author names map:", authorNamesMap);
             setCommentAuthorNames(authorNamesMap);
           } catch (error) {
-            console.error("Error obteniendo nombres de autores de comentarios:", error);
+            console.error(
+              "Error obteniendo nombres de autores de comentarios:",
+              error
+            );
             // No fallar completamente si hay error obteniendo nombres
             setCommentAuthorNames({});
           }
@@ -211,7 +227,7 @@ export default function ProyectoPage({
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
     setIsSubmittingComment(true);
-    
+
     try {
       const res = await axios.post(
         `https://red-networking-backend.vercel.app/api/projects/${id}/agregar-comentario`,
@@ -245,7 +261,7 @@ export default function ProyectoPage({
 
   const handleLike = async (commentId: string) => {
     if (!user?.id) return;
-    
+
     try {
       const res = await axios.post(
         `https://red-networking-backend.vercel.app/api/projects/comentarios/${commentId}/like`,
@@ -281,7 +297,7 @@ export default function ProyectoPage({
       <div
         key={comment._id}
         className="bg-gray-800 border border-gray-700 mb-3 rounded"
-      >  
+      >
         <div className="flex items-center gap-2 p-3 border-b border-gray-700">
           <Avatar className="w-6 h-6">
             <AvatarImage
@@ -295,25 +311,28 @@ export default function ProyectoPage({
             </AvatarFallback>
           </Avatar>
           <div className="w-full flex justify-between items-center text-sm">
-          <div className="flex-col">
-            <span className="text-blue-400 text-xs">{commentAuthorNames[comment.authorID || comment.author] || comment.author}</span>
-            <span className="text-gray-400 text-xs ml-2">
-              {fechaFormateada}
-            </span>
+            <div className="flex-col">
+              <span className="text-blue-400 text-xs">
+                {commentAuthorNames[comment.authorID || comment.author] ||
+                  comment.author}
+              </span>
+              <span className="text-gray-400 text-xs ml-2">
+                {fechaFormateada}
+              </span>
+            </div>
+            {(user?.role === "admin" || comment.authorID === user?.id) && (
+              <DeleteCommentButton
+                commentId={comment._id}
+                userId={user?.id || ""}
+                userRole={user?.role || ""}
+                onDeleted={() =>
+                  setComments((prev) =>
+                    prev.filter((c) => c._id !== comment._id)
+                  )
+                }
+              />
+            )}
           </div>
-          {(user?.role === "admin" || comment.authorID === user?.id) && (
-                        <DeleteCommentButton
-                          commentId={comment._id}
-                          userId={user?.id || ""}
-                          userRole={user?.role || ""}
-                          onDeleted={() =>
-                            setComments((prev) =>
-                              prev.filter((c) => c._id !== comment._id)
-                            )
-                          }
-                        />
-                      )}
-                      </div>
         </div>
         <div className="p-3">
           <p className="text-white font-light text-sm mb-3">
@@ -346,7 +365,7 @@ export default function ProyectoPage({
             <div className="h-8 bg-gray-700 rounded animate-pulse mb-4"></div>
             <div className="h-6 bg-gray-700 rounded animate-pulse w-3/4"></div>
           </div>
-          
+
           {/* Skeleton Content */}
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -362,7 +381,7 @@ export default function ProyectoPage({
                 <div className="h-4 bg-gray-700 rounded animate-pulse"></div>
               </div>
             </div>
-            
+
             <div className="bg-[#181b22] rounded-lg p-4 border border-gray-700">
               <div className="h-6 bg-gray-700 rounded animate-pulse mb-4"></div>
               <div className="space-y-2">
@@ -371,7 +390,7 @@ export default function ProyectoPage({
                 <div className="h-4 bg-gray-700 rounded animate-pulse w-3/4"></div>
               </div>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-[#181b22] rounded-lg p-4 border border-gray-700">
                 <div className="h-6 bg-gray-700 rounded animate-pulse mb-4"></div>
@@ -395,7 +414,7 @@ export default function ProyectoPage({
       </DashboardLayout>
     );
   }
-  
+
   // Debug: ver el valor de la fecha
   console.log("Fecha del proyecto:", proyecto.date);
   console.log("Tipo de fecha:", typeof proyecto.date);
@@ -417,7 +436,7 @@ export default function ProyectoPage({
             Título del Proyecto:{" "}
             <span className="text-blue-400">{proyecto.title}</span>
           </h1>
-            <ProjectDropDownActions projectId={id} isAuthor={isAuthor} />
+          <ProjectDropDownActions projectId={id} isAuthor={isAuthor} />
         </div>
 
         {/* Autores y Fecha */}
@@ -430,9 +449,12 @@ export default function ProyectoPage({
               {authorNames && authorNames.length > 0 ? (
                 authorNames.map((author, idx) => (
                   <li key={idx} className="flex items-center gap-2">
-                    <span className="bg-blue-900 text-blue-300 px-2 py-1 rounded-full text-sm font-medium">
-                      {author}
-                    </span>
+                    <Link
+                      href={`/Perfil?userId=${proyecto.authors[idx]}`}
+                      className="bg-blue-900 text-blue-300 px-2 py-1 rounded-full text-sm font-medium hover:text-blue-400 transition"
+                    >
+                      @{author}
+                    </Link>
                   </li>
                 ))
               ) : (
@@ -529,8 +551,8 @@ export default function ProyectoPage({
                       {tag}
                     </span>
                   );
-                }))
-              : (
+                })
+              ) : (
                 <span className="text-gray-400 text-sm">Sin etiquetas</span>
               )}
             </div>
@@ -544,10 +566,10 @@ export default function ProyectoPage({
             </span>
             {proyecto.repositoryLink &&
             proyecto.repositoryLink.trim() !== "" ? (
-              <a 
-                href={proyecto.repositoryLink} 
-                target="_blank" 
-                rel="noopener noreferrer" 
+              <a
+                href={proyecto.repositoryLink}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-2"
               >
                 <Github className="w-5 h-5" />
@@ -560,7 +582,7 @@ export default function ProyectoPage({
           <div className="bg-[#181b22] rounded-lg p-4 border border-gray-700 flex flex-col items-center text-gray-200">
             <span className="font-semibold mb-2 text-white">Manual:</span>
             {proyecto.document && proyecto.document.trim() !== "" ? (
-              <a 
+              <a
                 href={proyecto.document}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -590,12 +612,12 @@ export default function ProyectoPage({
           <div className="flex justify-center">
             {proyecto.image && proyecto.image.trim() !== "" ? (
               <div className="max-w-2xl w-full relative">
-                <Image 
-                  src={proyecto.image} 
-                  alt="Imagen del sistema" 
+                <Image
+                  src={proyecto.image}
+                  alt="Imagen del sistema"
                   width={800}
                   height={600}
-                  className="rounded-lg w-full h-auto max-h-96 object-contain border border-gray-700" 
+                  className="rounded-lg w-full h-auto max-h-96 object-contain border border-gray-700"
                   onLoadStart={() => {
                     setImageLoading(true);
                     setImageError(false);
@@ -613,13 +635,17 @@ export default function ProyectoPage({
                   <div className="absolute inset-0 bg-gray-800 rounded-lg border border-gray-700 flex items-center justify-center z-10">
                     <div className="text-center">
                       <Loader2 className="w-8 h-8 animate-spin text-blue-400 mx-auto mb-2" />
-                      <p className="text-gray-400 text-sm">Cargando imagen...</p>
+                      <p className="text-gray-400 text-sm">
+                        Cargando imagen...
+                      </p>
                     </div>
                   </div>
                 )}
                 {imageError && (
                   <div className="absolute inset-0 bg-gray-800 rounded-lg border border-gray-700 flex items-center justify-center z-10">
-                    <span className="text-gray-400 text-sm">Error al cargar la imagen</span>
+                    <span className="text-gray-400 text-sm">
+                      Error al cargar la imagen
+                    </span>
                   </div>
                 )}
               </div>
@@ -635,8 +661,10 @@ export default function ProyectoPage({
         {/* Resumen IA */}
         <div className="bg-[#1e293b] border-2 border-blue-500 rounded-lg p-4 my-6 text-gray-200 shadow-lg">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="font-semibold text-lg text-blue-400">Resumen generado por IA</h3>
-            {(!iaSummary && !isLoadingSummary) && (
+            <h3 className="font-semibold text-lg text-blue-400">
+              Resumen generado por IA
+            </h3>
+            {!iaSummary && !isLoadingSummary && (
               <button
                 className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
                 onClick={handleGenerateSummary}
@@ -685,7 +713,7 @@ export default function ProyectoPage({
                       {...props}
                     />
                   ),
-                  p: (props) => <p className="mb-2" {...props} />, 
+                  p: (props) => <p className="mb-2" {...props} />,
                 }}
               >
                 {iaSummary}
@@ -754,7 +782,10 @@ export default function ProyectoPage({
           {isLoadingComments && (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-gray-800 border border-gray-700 rounded p-4">
+                <div
+                  key={i}
+                  className="bg-gray-800 border border-gray-700 rounded p-4"
+                >
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-6 h-6 bg-gray-700 rounded-full animate-pulse"></div>
                     <div className="h-4 bg-gray-700 rounded animate-pulse w-24"></div>
