@@ -25,7 +25,7 @@ import {
 } from "../ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGetRatingByProjectTeacher } from "../../../hooks/useGetRatingByProjectTeacher";
-import ShowRatingPage from "@/app/Proyecto/evaluacion/page";
+import ShowRatingPage from "./ShowRatingPage";
 import { CreateProjectRatingForm } from "../form/CreateProjectRatingForm";
 import { CreatePuntuacionForm } from "../form/CreatePuntuacionProjectForm";
 import RatingListPage from "./RatingList";

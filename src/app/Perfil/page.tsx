@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import DeleteUserButton from "@/components/admin/DeleteUserButton";
@@ -61,7 +61,7 @@ interface UserProfile {
   role?: string; 
 }
 
-export default function Perfil() {
+function PerfilContent() {
   const { user, isAuthenticated } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -877,5 +877,22 @@ export default function Perfil() {
         </div>
       </div>
     </DashboardLayout>
+  );
+}
+
+export default function Perfil() {
+  return (
+    <Suspense fallback={
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-500" />
+            <p className="text-gray-400">Cargando perfil...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    }>
+      <PerfilContent />
+    </Suspense>
   );
 }

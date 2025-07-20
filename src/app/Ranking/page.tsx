@@ -35,7 +35,7 @@ export default function Ranking() {
           
           // Inicializar contadores visuales de estrellas con los valores actuales
           const initialStarCounts: { [key: string]: number } = {};
-          projectsWithStars.forEach((project) => {
+          projectsWithStars.forEach((project: ProjectApiResponse & { stars: number }) => {
             initialStarCounts[project._id] = project.stars || 0;
           });
           setVisualStarCounts(prev => ({ ...prev, ...initialStarCounts }));
