@@ -6,7 +6,7 @@ import {
   MoreHorizontal,
   ScrollText,
   Star,
-  Trash2
+  Trash2,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "../ui/button";
@@ -28,20 +28,39 @@ import { useGetRatingByProjectTeacher } from "../../../hooks/useGetRatingByProje
 import ShowRatingPage from "./ShowRatingPage";
 import { CreateProjectRatingForm } from "../form/CreateProjectRatingForm";
 import { CreatePuntuacionForm } from "../form/CreatePuntuacionProjectForm";
+import EditProjectForm from "../form/EditProjectForm";
 import RatingListPage from "./RatingList";
 import DeleteProject from "@/components/admin/DeleteProject";
+
+interface Proyecto {
+  _id: string;
+  title: string;
+  description: string;
+  authors: string[];
+  tags: string[];
+  tools: string[];
+  repositoryLink: string;
+  image: string;
+  document: string;
+  puntuacion: number[];
+  comments: string[];
+  date: string;
+}
 
 const ProjectDropDownActions = ({
   projectId,
   isAuthor,
+  project,
 }: {
   projectId: string;
   isAuthor: boolean;
+  project: Proyecto;
 }) => {
   const [openRating, setOpenRating] = useState(false);
   const [openWatchRating, setOpenWatchRating] = useState(false);
   const [openListRating, setOpenListRating] = useState(false);
   const [openPuntuacion, setOpenPuntuacion] = useState(false);
+  const [openEdit, setOpenEdit] = useState(false);
   const [openDelete, setOpenDelete] = useState(false);
   const { user } = useAuth();
 
@@ -94,6 +113,13 @@ const ProjectDropDownActions = ({
             <p className="pl-2">Ver calificaciones</p>
           </DropdownMenuItem>
 
+          {isAuthor && (
+            <DropdownMenuItem onClick={() => setOpenEdit(true)}>
+              <ClipboardPenLine className="size-5 text-purple-500" />
+              <p className="pl-2">Editar Proyecto</p>
+            </DropdownMenuItem>
+          )}
+
           {(user?.role === "admin" || isAuthor) && (
             <DropdownMenuItem
               onClick={() => setOpenDelete(true)}
@@ -108,7 +134,7 @@ const ProjectDropDownActions = ({
 
       {/* DIALOGO DE CALIFICACION */}
       <Dialog open={openRating} onOpenChange={setOpenRating}>
-        <DialogContent className="bg-gray-800 border-gray-700 text-white max-w-md">
+        <DialogContent className="overflow-y-auto max-h-[90vh] bg-gray-800 border-gray-700 text-white max-w-md">
           <DialogHeader>
             <DialogTitle className="text-center text-white">
               Evaluar Proyecto
@@ -180,6 +206,23 @@ const ProjectDropDownActions = ({
           </DialogHeader>
         </DialogContent>
       </Dialog>
+
+      {/* DIALOGO PARA EDITAR PROYECTO */}
+      <Dialog open={openEdit} onOpenChange={setOpenEdit}>
+        <DialogContent className=" overflow-y-auto bg-gray-800 border-gray-700 text-white max-h-[90vh] max-w-2xl ">
+          <DialogHeader>
+            <DialogTitle className="text-center">Editar Proyecto</DialogTitle>
+          </DialogHeader>
+          <EditProjectForm
+            project={project}
+            onSuccess={() => {
+              setOpenEdit(false);
+              window.location.reload();
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
       {/* ELIMINAR PROYECTO PARA ADMINISTRADORES Y USUARIOS PROPIETARIOS*/}
       <DeleteProject
         projectId={projectId}

@@ -469,7 +469,7 @@ export default function ProyectoPage({
             Título del Proyecto:{" "}
             <span className="text-blue-400">{proyecto.title}</span>
           </h1>
-          <ProjectDropDownActions projectId={id} isAuthor={isAuthor} />
+          <ProjectDropDownActions projectId={id} isAuthor={isAuthor} project={proyecto} />
         </div>
 
         {/* Autores y Fecha */}
