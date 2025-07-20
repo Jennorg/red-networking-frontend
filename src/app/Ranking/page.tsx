@@ -1,70 +1,273 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import axios from "axios";
 import { ProjectCard } from "@/components/card/ProjectCard";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { ProjectCategorySelector } from "@/components/misc/ProjectCategorySelector";
 import { SmartPagination } from "@/components/ui/smart-pagination";
+import { useAuth } from "@/contexts/AuthContext";
+import { API_ENDPOINTS } from "@/config/env";
+import { ProjectApiResponse } from "@/components/card/ProjectCard";
 
 export default function Ranking() {
+  const { user, isAuthenticated } = useAuth();
+  const [rankingData, setRankingData] = useState<(ProjectApiResponse & { stars: number })[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [favoritedProjects, setFavoritedProjects] = useState<Set<string>>(new Set());
+  const [favoriteLoading, setFavoriteLoading] = useState<Set<string>>(new Set());
+  const [visualStarCounts, setVisualStarCounts] = useState<{ [key: string]: number }>({});
+
+  const totalPages = 1; 
   
-  const totalPages = 3;
-  const mockData = [
-    {
-      _id: "ranking-1",
-      title: "Ecuanutrition",
-      authors: ["EdwardG"],
-      date: "2024-01-01",
-      tags: ["web", "management"],
-      description: "Plataforma de gestión para productos del mar y camarones, con sistema de inventario y ventas.",
-      repositoryLink: "#",
-      tools: ["React", "Node.js"],
-      image: "",
-      document: "",
-      __v: 0,
-      position: 1,
-      avatarURL: "avatar.png",
-      stars: 120,
-      views: 200
-    },
-    {
-      _id: "ranking-2",
-      title: "Ecuanutrition",
-      authors: ["EdwardG"],
-      date: "2024-01-01",
-      tags: ["web", "management"],
-      description: "Plataforma de gestión para productos del mar y camarones, con sistema de inventario y ventas.",
-      repositoryLink: "#",
-      tools: ["React", "Node.js"],
-      image: "",
-      document: "",
-      __v: 0,
-      position: 2,
-      avatarURL: "avatar.png",
-      stars: 120,
-      views: 200
-    },
-    {
-      _id: "ranking-3",
-      title: "Ecuanutrition",
-      authors: ["EdwardG"],
-      date: "2024-01-01",
-      tags: ["web", "management"],
-      description: "Plataforma de gestión para productos del mar y camarones, con sistema de inventario y ventas.",
-      repositoryLink: "#",
-      tools: ["React", "Node.js"],
-      image: "",
-      document: "",
-      __v: 0,
-      position: 3,
-      avatarURL: "avatar.png",
-      stars: 120,
-      views: 200
+  useEffect(() => {
+    const fetchRanking = async () => {
+      try {
+        const response = await axios.get("https://red-networking-backend.vercel.app/api/ranking");
+        const resultado = response.data;
+
+        if (resultado.proceso) {
+          const projectsWithStars = resultado.data.map((project: ProjectApiResponse & { favoritos?: number }) => ({
+            ...project,
+            stars: project.favoritos ?? 0,
+          }));
+          
+          setRankingData(projectsWithStars);
+          
+          // Inicializar contadores visuales de estrellas con los valores actuales
+          const initialStarCounts: { [key: string]: number } = {};
+          projectsWithStars.forEach((project: ProjectApiResponse & { stars: number }) => {
+            initialStarCounts[project._id] = project.stars || 0;
+          });
+          setVisualStarCounts(prev => ({ ...prev, ...initialStarCounts }));
+        } else {
+          console.error("Error al obtener ranking:", resultado.message);
+        }
+      } catch (error: unknown) {
+        console.error("Error al conectar con el backend:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchRanking();
+  }, []);
+
+  // Custom event to notify sidebar of favorites changes
+  const notifyFavoritesChange = () => {
+    window.dispatchEvent(new CustomEvent('favoritesChanged'));
+  };
+
+  // Función para obtener los favoritos del usuario
+  const fetchUserFavorites = useCallback(async () => {
+    if (!isAuthenticated || !user) {
+      setFavoritedProjects(new Set());
+      return;
     }
-  ];
 
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(
+        API_ENDPOINTS.USER_FAVORITES(user.id),
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
 
+      // Extraer los IDs de los proyectos favoritos
+      const favoritesData = response.data.favoritos || response.data || [];
+      const favoriteIds: string[] = Array.isArray(favoritesData) 
+        ? favoritesData.map((fav: { _id?: string; id?: string }) => typeof fav === 'string' ? fav : fav._id || fav.id || '')
+        : [];
+      
+      console.log('User favorites:', favoriteIds);
+      setFavoritedProjects(new Set(favoriteIds));
+    } catch (error: unknown) {
+      console.error("Error fetching user favorites:", error);
+      setFavoritedProjects(new Set());
+    }
+  }, [isAuthenticated, user]);
+
+  // Cargar favoritos cuando el componente se monta
+  useEffect(() => {
+    fetchUserFavorites();
+  }, [fetchUserFavorites]);
+
+ 
+
+  const addToFavorites = useCallback(async (projectId: string) => {
+    if (!isAuthenticated || !user) {
+      console.log("User not authenticated, cannot add to favorites");
+      return;
+    }
+
+    setFavoriteLoading(prev => new Set(prev).add(projectId));
+    
+    try {
+      const token = localStorage.getItem('token');
+      
+      // Try the first endpoint structure
+      try {
+        const response = await axios.post(
+          API_ENDPOINTS.USER_FAVORITE_PROJECT(user.id, projectId),
+          {},
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+        
+        console.log("Project added to favorites:", response.data);
+        setFavoritedProjects(prev => new Set(prev).add(projectId));
+        // Actualizar inmediatamente el contador visual de estrellas basado en el valor actual
+        setVisualStarCounts(prev => ({
+          ...prev,
+          [projectId]: (prev[projectId] || 0) + 1
+        }));
+        notifyFavoritesChange(); // Notify sidebar
+        await fetchUserFavorites();
+        return; // Success, exit early
+      } catch (firstError: unknown) {
+        console.log("First endpoint failed, trying alternative:", firstError);
+        
+        // Try alternative endpoint structure
+        try {
+          const response = await axios.post(
+            API_ENDPOINTS.FAVORITE_PROJECT_ALT(projectId),
+            { userId: user.id },
+            {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+          
+          console.log("Project added to favorites (alternative):", response.data);
+          setFavoritedProjects(prev => new Set(prev).add(projectId));
+          // Actualizar inmediatamente el contador visual de estrellas basado en el valor actual
+          setVisualStarCounts(prev => ({
+            ...prev,
+            [projectId]: (prev[projectId] || 0) + 1
+          }));
+          notifyFavoritesChange(); // Notify sidebar
+          await fetchUserFavorites();
+          return; // Success, exit early
+        } catch (secondError: unknown) {
+          console.log("Alternative endpoint also failed:", secondError);
+          throw secondError; // Re-throw to be caught by outer catch
+        }
+      }
+    } catch (error: unknown) {
+      console.error("Error adding project to favorites:", error);
+    } finally {
+      setFavoriteLoading(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(projectId);
+        return newSet;
+      });
+    }
+  }, [isAuthenticated, user, fetchUserFavorites]);
+
+  const removeFromFavorites = useCallback(async (projectId: string) => {
+    if (!isAuthenticated || !user) {
+      console.log("User not authenticated, cannot remove from favorites");
+      return;
+    }
+
+    setFavoriteLoading(prev => new Set(prev).add(projectId));
+    
+    try {
+      const token = localStorage.getItem('token');
+      
+      // Try the first endpoint structure
+      try {
+        const response = await axios.delete(
+          API_ENDPOINTS.USER_FAVORITE_PROJECT(user.id, projectId),
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+        
+        console.log("Project removed from favorites:", response.data);
+        setFavoritedProjects(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(projectId);
+          return newSet;
+        });
+        // Actualizar inmediatamente el contador visual de estrellas basado en el valor actual
+        setVisualStarCounts(prev => ({
+          ...prev,
+          [projectId]: Math.max(0, (prev[projectId] || 0) - 1)
+        }));
+        notifyFavoritesChange(); // Notify sidebar
+        await fetchUserFavorites();
+        return; // Success, exit early
+      } catch (firstError: unknown) {
+        console.log("First endpoint failed, trying alternative:", firstError);
+        
+        // Try alternative endpoint structure
+        try {
+          const response = await axios.delete(
+            API_ENDPOINTS.FAVORITE_PROJECT_ALT(projectId),
+            {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              },
+              data: { userId: user.id }
+            }
+          );
+          
+          console.log("Project removed from favorites (alternative):", response.data);
+          setFavoritedProjects(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(projectId);
+            return newSet;
+          });
+          // Actualizar inmediatamente el contador visual de estrellas basado en el valor actual
+          setVisualStarCounts(prev => ({
+            ...prev,
+            [projectId]: Math.max(0, (prev[projectId] || 0) - 1)
+          }));
+          notifyFavoritesChange(); // Notify sidebar
+          await fetchUserFavorites();
+          return; // Success, exit early
+        } catch (secondError: unknown) {
+          console.log("Alternative endpoint also failed:", secondError);
+          throw secondError; // Re-throw to be caught by outer catch
+        }
+      }
+    } catch (error: unknown) {
+      console.error("Error removing project from favorites:", error);
+    } finally {
+      setFavoriteLoading(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(projectId);
+        return newSet;
+      });
+    }
+  }, [isAuthenticated, user, fetchUserFavorites]);
+
+  const toggleFavorite = useCallback((projectId: string) => {
+    if (!isAuthenticated) {
+      console.log("User not authenticated, cannot toggle favorite");
+      return;
+    }
+
+    if (favoritedProjects.has(projectId)) {
+      removeFromFavorites(projectId);
+    } else {
+      addToFavorites(projectId);
+    }
+  }, [isAuthenticated, favoritedProjects, addToFavorites, removeFromFavorites]);
 
   const handlePageChange = (page: number) => {
     // Validate page number before changing
@@ -92,17 +295,28 @@ export default function Ranking() {
           </h2>
         </div>
 
-        <div>
+        {/* <div>
           <ProjectCategorySelector />
-        </div>
+        </div> */}
 
           <div className="flex flex-col gap-2 sm:gap-5">
-            {mockData.map((project, index) => (
-              <ProjectCard
-                key={`${project._id}-${index}`}
-                {...project}
-              />
-            ))}
+            {isLoading ? (
+              <p className="text-white text-center">Cargando ranking...</p>
+            ) : rankingData.length > 0 ? (
+              rankingData.map((project: ProjectApiResponse & { stars: number }, index: number) => (
+                <ProjectCard
+                  key={`${project._id}-${index}`}
+                  {...project}
+                  stars={visualStarCounts[project._id] ?? project.stars ?? 0}
+                  position={index + 1}
+                  isFavorited={favoritedProjects.has(project._id)}
+                  onToggleFavorite={() => toggleFavorite(project._id)}
+                  isFavoriteLoading={favoriteLoading.has(project._id)}
+                />
+              ))
+            ) : (
+              <p className="text-white text-center">No hay proyectos en el ranking.</p>
+            )}
           </div>
 
           <div>
