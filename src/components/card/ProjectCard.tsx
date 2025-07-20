@@ -437,7 +437,7 @@ export function ProjectCard(props: ProjectCardProps) {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            <p className="text-white font-light text-xs sm:text-sm sm:font-medium">
+            <p className="text-white font-medium text-xs sm:text-sm sm:font-medium">
               {description}
             </p>
             <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-3">

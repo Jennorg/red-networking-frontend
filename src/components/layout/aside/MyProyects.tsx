@@ -144,7 +144,7 @@ const MyProyects = () => {
               onClick={() => handleProjectClick(project._id)}
             >
               <div className="w-2 h-2 bg-green-400 rounded-full group-hover:bg-green-300 transition-colors"></div>
-              <p className="font-light text-sm truncate hover:text-green-400 transition-colors">
+              <p className="font-light text-base truncate hover:text-green-400 transition-colors">
                 {project.title}
               </p>
             </div>

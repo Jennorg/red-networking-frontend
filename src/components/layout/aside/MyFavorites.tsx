@@ -145,7 +145,7 @@ const MyFavorites = () => {
               onClick={() => handleProjectClick(project._id)}
             >
               <div className="w-2 h-2 bg-blue-400 rounded-full group-hover:bg-blue-300 transition-colors"></div>
-              <p className="font-light text-sm truncate hover:text-blue-400 transition-colors">
+              <p className="font-light text-base truncate hover:text-blue-400 transition-colors">
                 {project.title}
               </p>
             </div>
