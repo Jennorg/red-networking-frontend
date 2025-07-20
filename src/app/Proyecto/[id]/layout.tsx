@@ -1,12 +1,10 @@
 import { createProjectMetadata } from "@/lib/metadata";
-import type { Metadata } from "next";
 
-interface Props {
-  params: { id: string };
-}
+type Params = Promise<{ id: string }>;
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  return createProjectMetadata(params.id);
+export async function generateMetadata({ params }: { params: Params }){
+  const { id } = await params;
+  return createProjectMetadata(id);
 }
 
 export default function ProyectoLayout({
@@ -14,5 +12,5 @@ export default function ProyectoLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  return <>{children}</>;
 }

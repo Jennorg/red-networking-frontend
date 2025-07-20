@@ -93,7 +93,6 @@ export default function ProyectoPage({
   const [imageError, setImageError] = useState(false);
   const [isLoadingProject, setIsLoadingProject] = useState(true);
   const isAuthor = !!proyecto?.authors?.includes(user?.id ?? "");
-  const role = user?.role || "";
   useEffect(() => {
     const fetchProyecto = async () => {
       setIsLoadingProject(true);
