@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Eye, Star, MessageCircleMore, Heart, Loader2 } from "lucide-react";
+import { Eye, Star, Heart, Loader2 } from "lucide-react";
 import { LanguageIcon } from "../misc/LanguageIcon";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
@@ -105,7 +105,9 @@ export function ProjectCard(props: ProjectCardProps) {
         return;
       }
       try {
-        const res = await axios.get("https://red-networking-backend.vercel.app/auth/users");
+        const res = await axios.get(
+          "https://red-networking-backend.vercel.app/auth/users"
+        );
         const users: { _id: string; name: string }[] = res.data.users || [];
         const names = authors.map((id) => {
           const user = users.find((u) => u._id === id);
@@ -235,7 +237,13 @@ export function ProjectCard(props: ProjectCardProps) {
       if (res.data.ok) {
         setComments((prev) => [res.data.comentario, ...prev]);
         setNewComment("");
-        
+
+        if (user?.id && user?.name) {
+          setCommentAuthorNames((prev) => ({
+            ...prev,
+            [user.id]: user.name || "",
+          }));
+        }
       } else {
         console.error("Error al comentar:", res.data.error);
         toast.error("Error al publicar el comentario");
@@ -303,7 +311,7 @@ export function ProjectCard(props: ProjectCardProps) {
     return (
       <Card
         key={comment._id}
-        className="bg-gray-800 border border-gray-700 mb-3"
+        className="bg-gray-800 border border-gray-700 mb-3 gap-1"
       >
         <CardHeader className="pb-2">
           <CardTitle className="flex justify-between items-center text-sm">
@@ -349,17 +357,13 @@ export function ProjectCard(props: ProjectCardProps) {
               <button
                 className={`flex items-center gap-1 text-xs ${
                   comment.likes.includes(user?.id ?? "")
-                    ? "text-red-500"
+                    ? "text-red-500 hover:text-red-700 "
                     : "text-gray-400 hover:text-red-500"
                 }`}
                 onClick={() => handleLike(comment._id)}
               >
                 <Heart className="w-4 h-4" />
                 <span>{comment.likes.length}</span>
-              </button>
-              <button className="flex items-center gap-1 text-gray-400 hover:text-blue-500">
-                <MessageCircleMore className="w-4 h-4" />
-                <span className="text-xs">Responder</span>
               </button>
             </div>
           </div>

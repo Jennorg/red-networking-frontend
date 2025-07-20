@@ -742,7 +742,7 @@ function PerfilContent() {
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="name" className="text-gray-300">
+                        <Label htmlFor="name" className="text-gray-300 mb-2">
                           Nombre
                         </Label>
                         <Input
@@ -755,7 +755,7 @@ function PerfilContent() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="email" className="text-gray-300">
+                        <Label htmlFor="email" className="text-gray-300 mb-2">
                           Email
                         </Label>
                         <Input
@@ -769,7 +769,7 @@ function PerfilContent() {
                       </div>
                     </div>
                     <div>
-                      <Label htmlFor="bio" className="text-gray-300">
+                      <Label htmlFor="bio" className="text-gray-300 mb-2">
                         Biografía
                       </Label>
                       <textarea
@@ -782,7 +782,7 @@ function PerfilContent() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="website" className="text-gray-300">
+                      <Label htmlFor="website" className="text-gray-300 mb-2">
                         Sitio Web
                       </Label>
                       <Input
@@ -795,7 +795,7 @@ function PerfilContent() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="github" className="text-gray-300">
+                      <Label htmlFor="github" className="text-gray-300 mb-2">
                         Enlace de GitHub
                       </Label>
                       <Input
@@ -809,7 +809,7 @@ function PerfilContent() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="role" className="text-gray-300">
+                      <Label htmlFor="role" className="text-gray-300 mb-2">
                         Rol
                       </Label>
                       <Input
