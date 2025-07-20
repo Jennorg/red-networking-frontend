@@ -28,7 +28,7 @@ const Aside = () => {
       {/* Overlay para móviles */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+          className="fixed inset-0 bg-black/50 z-20 lg:hidden"
           onClick={toggleSidebar}
         />
       )}
@@ -37,7 +37,7 @@ const Aside = () => {
       <aside
         className={`
           fixed lg:sticky top-0 transition-transform duration-300 ease-in-out 
-          bg-gray-800 border-r border-white/20 z-20 h-auto
+          bg-gray-800 border-r border-white/20 z-30 h-auto
           ${isOpen ? "translate-x-0" : "-translate-x-full"} 
           lg:translate-x-0 w-64 
         `}
