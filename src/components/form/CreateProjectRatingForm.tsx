@@ -46,7 +46,7 @@ interface FormProps {
 
 export function CreateProjectRatingForm({ projectId, onClose }: FormProps) {
   const { createRating } = useCreateProjectRating();
-  const { user, isAuthenticated, isLoading, token } = useAuth();
+  const { user } = useAuth();
 
   const teacherId = user?.id || "";
 

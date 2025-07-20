@@ -28,6 +28,14 @@ const StarRating = ({ score }: { score: number }) => {
   );
 };
 
+type Evaluation = {
+  _id: string;
+  teacherID?: { name?: string };
+  score: number;
+  feedback?: string;
+  createdAt: string;
+};
+
 export default function RatingListPage({ projectId, onClose }: RatingProps) {
   const { data, isLoading, error } = useGetRatingListByProject(projectId);
 
@@ -59,7 +67,7 @@ export default function RatingListPage({ projectId, onClose }: RatingProps) {
     );
   }
 
-  const evaluaciones = data?.evaluaciones || [];
+  const evaluaciones = (data?.evaluaciones || []) as unknown as Evaluation[];
 
   return (
     <div className="bg-gray-800 rounded-xl shadow-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto relative border border-gray-700">
@@ -74,7 +82,7 @@ export default function RatingListPage({ projectId, onClose }: RatingProps) {
         </p>
       ) : (
         <ul className="space-y-4">
-          {evaluaciones.map((evaluacion: any) => (
+          {evaluaciones.map((evaluacion) => (
             <li
               key={evaluacion._id}
               className="border-b border-gray-700 pb-4 last:border-b-0"
@@ -92,7 +100,7 @@ export default function RatingListPage({ projectId, onClose }: RatingProps) {
               </div>
               {evaluacion.feedback && (
                 <p className="text-gray-300 text-sm italic mt-2">
-                  "{evaluacion.feedback}"
+                  &quot;{evaluacion.feedback}&quot;
                 </p>
               )}
               <p className="text-gray-400 text-xs mt-2">
