@@ -620,8 +620,12 @@ function PerfilContent() {
                 {user?.role === "admin" && !isOwnProfile &&  (
                   <RoleChangeButton userId={userProfile._id} refetchProfile={loadProfileData} />
                 )}
-                {user?.role === "admin" && (
-                  <DeleteUserButton userId={userProfile._id} adminId={user.id} />
+                {(user?.role === "admin" || isOwnProfile) && (
+                  <DeleteUserButton
+                    userId={userProfile._id}
+                    currentUserId={user?.id || ''}
+                    currentUserRole={user?.role || ''}
+                  />
                 )}
           </div>
         </div>
