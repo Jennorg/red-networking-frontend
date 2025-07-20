@@ -224,6 +224,39 @@ export default function ProyectoPage({
       .finally(() => setIsLoadingSummary(false));
   };
 
+  const handleOpenOrDownloadDocument = () => {
+    if (!proyecto?.document) return;
+
+    const isPDF = proyecto.document.startsWith("data:application/pdf");
+    const isDOCX = proyecto.document.startsWith(
+      "data:application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    );
+    const isDOC = proyecto.document.startsWith("data:application/msword");
+
+    if (isPDF) {
+      // Abrir PDF en nueva pestaña
+      fetch(proyecto.document)
+        .then((res) => res.blob())
+        .then((blob) => {
+          const url = URL.createObjectURL(blob);
+          window.open(url, "_blank");
+        });
+      return;
+    }
+
+    if (isDOC || isDOCX) {
+      // Forzar descarga para Word
+      const link = document.createElement("a");
+      link.href = proyecto.document;
+      link.download = proyecto.title ? `${proyecto.title}.docx` : "manual.docx";
+      link.click();
+      return;
+    }
+
+    // Si llega aquí es otro formato no esperado
+    alert("Formato no soportado.");
+  };
+
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
     setIsSubmittingComment(true);
@@ -582,15 +615,13 @@ export default function ProyectoPage({
           <div className="bg-[#181b22] rounded-lg p-4 border border-gray-700 flex flex-col items-center text-gray-200">
             <span className="font-semibold mb-2 text-white">Manual:</span>
             {proyecto.document && proyecto.document.trim() !== "" ? (
-              <a
-                href={proyecto.document}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={handleOpenOrDownloadDocument}
                 className="inline-flex items-center gap-2 px-4 py-2 text-blue-400 border border-blue-400 rounded-md hover:bg-blue-400 hover:text-white transition-colors text-sm"
               >
                 <Download className="w-4 h-4" />
-                Descargar
-              </a>
+                Ver aquí
+              </button>
             ) : (
               <span className="text-gray-400 text-sm">No disponible</span>
             )}
