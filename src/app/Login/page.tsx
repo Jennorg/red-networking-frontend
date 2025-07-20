@@ -106,6 +106,7 @@ export default function Login() {
         toast.error(result.message || "No se pudo enviar el correo.");
       }
     } catch (err) {
+      console.error(err);
       toast.error("Error de conexión. Inténtalo de nuevo.");
     } finally {
       setForgotLoading(false);
