@@ -224,7 +224,7 @@ export function ProjectCard(props: ProjectCardProps) {
       if (res.data.ok) {
         setComments((prev) => [res.data.comentario, ...prev]);
         setNewComment("");
-        setShowCommentInput(false);
+        
       } else {
         console.error("Error al comentar:", res.data.error);
         toast.error("Error al publicar el comentario");
@@ -429,22 +429,21 @@ export function ProjectCard(props: ProjectCardProps) {
 
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                 <div className="flex gap-2">
-                  {onToggleComments && (
-                    <Button
-                      className="border-blue-400 text-blue-400 font-light hover:bg-blue-400/10"
-                      onClick={onToggleComments}
-                    >
-                      <MessageCircleMore className="w-4 h-4 mr-2" />
-                      {showComments
-                        ? "Ocultar comentarios"
-                        : "Mostrar comentarios"}
-                    </Button>
-                  )}
                   <Button
                     className="border-blue-400 text-blue-400 font-light hover:bg-blue-400/10"
-                    onClick={() => setShowCommentInput((prev) => !prev)}
+                    onClick={() => {
+                      // Si ya está todo abierto, cerramos ambos
+                      if (showComments) {
+                        setShowCommentInput(false);
+                        onToggleComments?.(); // oculta comentarios
+                      } else {
+                        setShowCommentInput(true); // muestra caja de texto
+                        onToggleComments?.();
+                      }
+                    }}
                   >
-                    {showCommentInput ? "Cancelar" : "Comentar"}
+                    {/* El texto cambia según el estado */}
+                    {showComments ? "Ocultar" : "Ver comentarios"}
                   </Button>
                 </div>
 
