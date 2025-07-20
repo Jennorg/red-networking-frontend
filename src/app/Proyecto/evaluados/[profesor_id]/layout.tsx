@@ -1,6 +1,7 @@
 import { METADATA } from "@/lib/metadata";
 
-export async function generateMetadata({ params }: { params: { profesor_id: string } }) {
+export async function generateMetadata({ params }: { params: Promise<{ profesor_id: string }> }) {
+  await params; // Await params but don't use profesor_id if not needed
   return METADATA.EVALUATED_PROJECTS;
 }
 

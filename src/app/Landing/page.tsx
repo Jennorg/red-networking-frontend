@@ -2,7 +2,6 @@
 
 import React from "react";
 import Header from "@/components/layout/header/Header";
-import Aside from "@/components/layout/aside/Aside";
 
 const LandingPage = () => {
   return (
