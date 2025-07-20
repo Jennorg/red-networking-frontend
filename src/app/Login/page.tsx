@@ -24,6 +24,9 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const { login, isAuthenticated } = useAuth();
   const router = useRouter();
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -79,6 +82,33 @@ export default function Login() {
       console.log(err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!forgotEmail) {
+      toast.error("Por favor ingresa tu correo.");
+      return;
+    }
+    setForgotLoading(true);
+    try {
+      const response = await fetch("https://red-networking-backend.vercel.app/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: forgotEmail }),
+      });
+      const result = await response.json();
+      if (result.ok || result.proceso) {
+        toast.success(result.message || "Revisa tu correo para recuperar tu contraseña.");
+        setShowForgotPassword(false);
+        setForgotEmail("");
+      } else {
+        toast.error(result.message || "No se pudo enviar el correo.");
+      }
+    } catch (err) {
+      toast.error("Error de conexión. Inténtalo de nuevo.");
+    } finally {
+      setForgotLoading(false);
     }
   };
 
@@ -148,6 +178,16 @@ export default function Login() {
             </button>
           </form>
 
+          <div className="mt-4 text-center">
+            <button
+              type="button"
+              className="text-blue-400 hover:underline"
+              onClick={() => setShowForgotPassword(true)}
+            >
+              ¿Olvidaste tu contraseña?
+            </button>
+          </div>
+
           <div className="mt-6 text-center">
             <p className="text-sm text-white">
               ¿No tienes cuenta?{" "}
@@ -172,6 +212,38 @@ export default function Login() {
       {isLoading && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <Loader2 className="h-12 w-12 text-white animate-spin" />
+        </div>
+      )}
+
+      {showForgotPassword && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-gray-900 p-8 rounded-lg shadow-lg w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4 text-white">Recuperar contraseña</h2>
+            <label htmlFor="forgot-email" className="block text-gray-200 mb-2">Introduce tu correo electrónico</label>
+            <input
+              id="forgot-email"
+              type="email"
+              value={forgotEmail}
+              onChange={e => setForgotEmail(e.target.value)}
+              placeholder="tu@email.com"
+              className="w-full px-3 py-2 border rounded-md mb-4 text-white"
+            />
+            <div className="flex gap-2">
+              <button
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+                onClick={handleForgotPassword}
+                disabled={forgotLoading}
+              >
+                {forgotLoading ? "Enviando..." : "Enviar"}
+              </button>
+              <button
+                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded"
+                onClick={() => setShowForgotPassword(false)}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
