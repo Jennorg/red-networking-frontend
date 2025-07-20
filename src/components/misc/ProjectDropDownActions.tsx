@@ -134,7 +134,7 @@ const ProjectDropDownActions = ({
 
       {/* DIALOGO DE CALIFICACION */}
       <Dialog open={openRating} onOpenChange={setOpenRating}>
-        <DialogContent className="bg-gray-800 border-gray-700 text-white max-w-md">
+        <DialogContent className="overflow-y-auto max-h-[90vh] bg-gray-800 border-gray-700 text-white max-w-md">
           <DialogHeader>
             <DialogTitle className="text-center text-white">
               Evaluar Proyecto
