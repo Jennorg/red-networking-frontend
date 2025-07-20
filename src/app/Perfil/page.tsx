@@ -24,7 +24,6 @@ import {
   Heart, 
   Globe,
   Code,
-  Award,
   Loader2
 } from "lucide-react";
 import { toast } from "sonner";
@@ -548,9 +547,9 @@ function PerfilContent() {
 
   return (
     <DashboardLayout>
-      <div className="w-full max-w-6xl mx-auto p-6 space-y-6">
+      <div className="w-full p-6 space-y-6">
         {/* Header del Perfil */}
-        <div className="bg-[#232733] rounded-xl p-6 border border-gray-700">
+        <div className="bg-[#232733] rounded-xl p-6 border border-gray-700 w-full">
           <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
             {/* Avatar y Información Principal */}
             <div className="flex items-center gap-4">
@@ -626,11 +625,10 @@ function PerfilContent() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Columna Principal */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Información Personal */}
-            <Card className="bg-[#232733] border-gray-700">
+        {/* Recuadros principales: Información Personal y Proyectos, uno debajo del otro y ocupando todo el ancho */}
+        <div className="flex flex-col gap-6 w-full">
+          {/* Información Personal */}
+          <Card className="bg-[#232733] border-gray-700 w-full">
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2">
                   <User className="w-5 h-5" />
@@ -737,7 +735,7 @@ function PerfilContent() {
             </Card>
 
             {/* Proyectos del Usuario */}
-            <Card className="bg-[#232733] border-gray-700">
+            <Card className="bg-[#232733] border-gray-700 w-full">
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2">
                   <Code className="w-5 h-5" />
@@ -812,69 +810,8 @@ function PerfilContent() {
                 )}
               </CardContent>
             </Card>
-          </div>
-
-          {/* Barra Lateral */}
-          <div className="space-y-6">
-            {/* Estadísticas */}
-            <Card className="bg-[#232733] border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Award className="w-5 h-5" />
-                  Estadísticas
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-400">{userStats?.projectsCreated || 0}</div>
-                    <div className="text-sm text-gray-400">Proyectos</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-green-400">{userStats?.projectsLiked || 0}</div>
-                    <div className="text-sm text-gray-400">Me gusta</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-400">{userStats?.totalViews || 0}</div>
-                    <div className="text-sm text-gray-400">Vistas</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-yellow-400">{userStats?.averageRating || 0}</div>
-                    <div className="text-sm text-gray-400">Rating</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Configuración Rápida */}
-            {/* <Card className="bg-[#232733] border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Settings className="w-5 h-5" />
-                  Configuración
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button variant="ghost" className="w-full justify-start gap-2 text-gray-300 hover:text-white hover:bg-gray-700">
-                  <Shield className="w-4 h-4" />
-                  Privacidad
-                </Button>
-                <Button variant="ghost" className="w-full justify-start gap-2 text-gray-300 hover:text-white hover:bg-gray-700">
-                  <Bell className="w-4 h-4" />
-                  Notificaciones
-                </Button>
-                <Button variant="ghost" className="w-full justify-start gap-2 text-gray-300 hover:text-white hover:bg-gray-700">
-                  <Palette className="w-4 h-4" />
-                  Apariencia
-                </Button>
-                <Button variant="ghost" className="w-full justify-start gap-2 text-gray-300 hover:text-white hover:bg-gray-700">
-                  <BookOpen className="w-4 h-4" />
-                  Ayuda
-                </Button>
-              </CardContent>
-            </Card> */}
-          </div>
         </div>
+        {/* Fin de recuadros principales */}
       </div>
     </DashboardLayout>
   );
