@@ -315,6 +315,7 @@ export default function EditProjectForm({ project, onSuccess }: EditProps) {
             <FormItem>
               <FormLabel className="text-white">Imagen</FormLabel>
               <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-center">
                 {previewImage && (
                   <Image
                     src={previewImage}
@@ -324,6 +325,7 @@ export default function EditProjectForm({ project, onSuccess }: EditProps) {
                     className="rounded-lg border border-gray-700 object-contain h-auto max-h-40"
                   />
                 )}
+                </div>
                 <label className="flex items-center justify-between gap-2 bg-white text-black px-3 py-2 rounded cursor-pointer border border-gray-300">
                   <span className="text-sm truncate max-w-[250px]">
                     {field.value?.name ?? "Selecciona una imagen"}
