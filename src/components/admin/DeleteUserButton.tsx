@@ -7,25 +7,39 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface DeleteUserButtonProps {
   userId: string;
-  adminId: string;
+  currentUserId: string;
+  currentUserRole: string;
 }
 
-export default function DeleteUserButton({ userId, adminId }: DeleteUserButtonProps) {
+export default function DeleteUserButton({
+  userId,
+  currentUserId,
+  currentUserRole,
+}: DeleteUserButtonProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { logout } = useAuth();
 
   const handleDelete = async () => {
     setLoading(true);
     try {
-      const response = await axios.delete(
-        `https://red-networking-backend.vercel.app/api/user/${userId}/${adminId}`
-      );
+      const endpoint =
+        currentUserRole === "admin"
+          ? `https://red-networking-backend.vercel.app/api/user/${userId}/${currentUserId}`
+          : `https://red-networking-backend.vercel.app/api/account/${userId}`;
+      const response = await axios.delete(endpoint);
       if (response.data.ok) {
         toast.success("Usuario eliminado exitosamente.");
+
+        if (currentUserId === userId) {
+          logout(); // Cierra sesión si es su propia cuenta
+        }
+
         setTimeout(() => {
           router.push("/"); // Redirige al home después de eliminar el usuario
         }, 1000);
