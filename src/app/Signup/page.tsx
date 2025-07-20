@@ -20,8 +20,8 @@ import { format } from "date-fns";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { CalendarIcon, EyeIcon, EyeOffIcon } from "lucide-react";
-import { useState } from "react";
+import { CalendarIcon, EyeIcon, EyeOffIcon, Check, X } from "lucide-react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -44,13 +44,28 @@ const formSchema = z.object({
   }),
 
   email: z.string().email("Correo inválido"),
-  password: z.string().min(6, "Mínimo 6 caracteres"),
+  password: z
+    .string()
+    .min(8, "Mínimo 8 caracteres")
+    .regex(/[A-Z]/, "Debe contener al menos una letra mayúscula")
+    .regex(/[a-z]/, "Debe contener al menos una letra minúscula")
+    .regex(
+      /[0-9!@#$%^&*(),.?":{}|<>]/,
+      "Debe contener al menos un número o símbolo"
+    ),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
+  const [passwordRequirements, setPasswordRequirements] = useState({
+    minLength: false,
+    hasUppercase: false,
+    hasLowercase: false,
+    hasNumberOrSymbol: false,
+  });
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -61,8 +76,47 @@ export default function Signup() {
     },
   });
 
-  function onSubmit(values: FormValues) {
-    console.log(values);
+  const password = form.watch("password");
+
+  // Validar requisitos de contraseña en tiempo real
+  useEffect(() => {
+    const requirements = {
+      minLength: Boolean(password && password.length >= 8),
+      hasUppercase: Boolean(password && /[A-Z]/.test(password)),
+      hasLowercase: Boolean(password && /[a-z]/.test(password)),
+      hasNumberOrSymbol: Boolean(
+        password && /[0-9!@#$%^&*(),.?":{}|<>]/.test(password)
+      ),
+    };
+    setPasswordRequirements(requirements);
+  }, [password]);
+
+  async function onSubmit(values: FormValues) {
+    try {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: values.name,
+          email: values.email,
+          password: values.password,
+          born: values.birthdate.toISOString(),
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.proceso) {
+        // Redirigir al login después del registro exitoso
+        window.location.href = "/Login";
+      } else {
+        console.error("Error en el registro:", result.message);
+      }
+    } catch (error) {
+      console.error("Error de conexión:", error);
+    }
   }
 
   return (
@@ -156,7 +210,7 @@ export default function Signup() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-[#58A6FF]">Password</FormLabel>
+                  <FormLabel className="text-[#58A6FF]">Contraseña</FormLabel>
                   <FormControl className="text-white">
                     <div className="relative">
                       <Input
@@ -177,6 +231,67 @@ export default function Signup() {
                       </button>
                     </div>
                   </FormControl>
+
+                  {/* Requisitos de contraseña interactivos */}
+                  <div className="mt-2 space-y-1">
+                    <div
+                      className={`flex items-center gap-2 text-sm ${
+                        passwordRequirements.minLength
+                          ? "text-[#58A6FF]"
+                          : "text-gray-400"
+                      }`}
+                    >
+                      {passwordRequirements.minLength ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <X className="h-4 w-4" />
+                      )}
+                      Mínimo 8 caracteres
+                    </div>
+                    <div
+                      className={`flex items-center gap-2 text-sm ${
+                        passwordRequirements.hasUppercase
+                          ? "text-[#58A6FF]"
+                          : "text-gray-400"
+                      }`}
+                    >
+                      {passwordRequirements.hasUppercase ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <X className="h-4 w-4" />
+                      )}
+                      Debe contener al menos una letra mayúscula
+                    </div>
+                    <div
+                      className={`flex items-center gap-2 text-sm ${
+                        passwordRequirements.hasLowercase
+                          ? "text-[#58A6FF]"
+                          : "text-gray-400"
+                      }`}
+                    >
+                      {passwordRequirements.hasLowercase ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <X className="h-4 w-4" />
+                      )}
+                      Debe contener al menos una letra minúscula
+                    </div>
+                    <div
+                      className={`flex items-center gap-2 text-sm ${
+                        passwordRequirements.hasNumberOrSymbol
+                          ? "text-[#58A6FF]"
+                          : "text-gray-400"
+                      }`}
+                    >
+                      {passwordRequirements.hasNumberOrSymbol ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <X className="h-4 w-4" />
+                      )}
+                      Debe contener al menos un número o símbolo
+                    </div>
+                  </div>
+
                   <FormMessage />
                 </FormItem>
               )}

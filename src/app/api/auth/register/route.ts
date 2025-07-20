@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
     const backendUrl =
       process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
 
-    const response = await fetch(`${backendUrl}/auth/login`, {
+    const response = await fetch(`${backendUrl}/auth/register`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error("Error en login API route:", error);
+    console.error("Error en register API route:", error);
     return NextResponse.json(
       { proceso: false, message: "Error interno del servidor" },
       { status: 500 }
