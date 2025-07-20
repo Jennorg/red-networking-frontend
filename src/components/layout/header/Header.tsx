@@ -3,7 +3,6 @@
 import React from "react";
 import Logo from './Logo';
 import SearchBar from "./SearchBar";
-import Notifications from "./Notifications";
 import AddProjectButton from "./AddProjectButton";
 import PerfilBubble from "@/components/common/PerfilBubble";
 import { useAuth } from "@/contexts/AuthContext";
@@ -26,8 +25,6 @@ const Header = () => {
         <SearchBar />
       </div>
       <div className="flex items-center gap-4 ml-auto">
-       
-        <Notifications />
 
         <Link 
           href="/Ranking" 
