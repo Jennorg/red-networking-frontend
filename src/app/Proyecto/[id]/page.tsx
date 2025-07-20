@@ -4,10 +4,11 @@ import React from "react";
 import axios from "axios";
 import { API_ENDPOINTS } from "@/config/env";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import DeleteCommentButton from "@/components/admin/DeleteCommentButton";
 import Image from "next/image";
 import { Github, Download } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Heart, MessageCircleMore, Loader2 } from "lucide-react";
+import { Heart, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useState } from "react";
@@ -223,6 +224,13 @@ export default function ProyectoPage({
         setComments((prev) => [res.data.comentario, ...prev]);
         setNewComment("");
         setShowCommentInput(false);
+
+        if (user?.id && user?.name) {
+          setCommentAuthorNames((prev) => ({
+            ...prev,
+            [user.id]: user.name || "",
+          }));
+        }
       } else {
         console.error("Error al publicar el comentario");
         toast.error("Error al publicar el comentario");
@@ -273,7 +281,7 @@ export default function ProyectoPage({
       <div
         key={comment._id}
         className="bg-gray-800 border border-gray-700 mb-3 rounded"
-      >
+      >  
         <div className="flex items-center gap-2 p-3 border-b border-gray-700">
           <Avatar className="w-6 h-6">
             <AvatarImage
@@ -286,15 +294,29 @@ export default function ProyectoPage({
                 : "CN"}
             </AvatarFallback>
           </Avatar>
+          <div className="w-full flex justify-between items-center text-sm">
           <div className="flex-col">
             <span className="text-blue-400 text-xs">{commentAuthorNames[comment.authorID || comment.author] || comment.author}</span>
             <span className="text-gray-400 text-xs ml-2">
               {fechaFormateada}
             </span>
           </div>
+          {(user?.role === "admin" || comment.authorID === user?.id) && (
+                        <DeleteCommentButton
+                          commentId={comment._id}
+                          userId={user?.id || ""}
+                          userRole={user?.role || ""}
+                          onDeleted={() =>
+                            setComments((prev) =>
+                              prev.filter((c) => c._id !== comment._id)
+                            )
+                          }
+                        />
+                      )}
+                      </div>
         </div>
         <div className="p-3">
-          <p className="text-white font-light text-sm mb-2">
+          <p className="text-white font-light text-sm mb-3">
             {comment.content}
           </p>
           <div className="flex gap-3">
@@ -308,10 +330,6 @@ export default function ProyectoPage({
             >
               <Heart className="w-4 h-4" />
               <span>{comment.likes.length}</span>
-            </button>
-            <button className="flex items-center gap-1 text-gray-400 hover:text-blue-500">
-              <MessageCircleMore className="w-4 h-4" />
-              <span className="text-xs">Responder</span>
             </button>
           </div>
         </div>
