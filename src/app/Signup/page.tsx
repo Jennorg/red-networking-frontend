@@ -20,8 +20,14 @@ import { format } from "date-fns";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { CalendarIcon, EyeIcon, EyeOffIcon, Loader2 } from "lucide-react";
-
+import {
+  CalendarIcon,
+  EyeIcon,
+  EyeOffIcon,
+  Check,
+  X,
+  Loader2,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -49,7 +55,15 @@ const formSchema = z.object({
   }),
 
   email: z.string().email("Correo inválido"),
-  password: z.string().min(6, "Mínimo 6 caracteres"),
+  password: z
+    .string()
+    .min(8, "Mínimo 8 caracteres")
+    .regex(/[A-Z]/, "Debe contener al menos una letra mayúscula")
+    .regex(/[a-z]/, "Debe contener al menos una letra minúscula")
+    .regex(
+      /[0-9!@#$%^&*(),.?":{}|<>]/,
+      "Debe contener al menos un número o símbolo"
+    ),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -59,13 +73,12 @@ export default function Signup() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { login, isAuthenticated } = useAuth();
-
-  // Redirigir si ya está autenticado
-  useEffect(() => {
-    if (isAuthenticated) {
-      router.push('/');
-    }
-  }, [isAuthenticated, router]);
+  const [passwordRequirements, setPasswordRequirements] = useState({
+    minLength: false,
+    hasUppercase: false,
+    hasLowercase: false,
+    hasNumberOrSymbol: false,
+  });
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -76,10 +89,28 @@ export default function Signup() {
     },
   });
 
+  // Redirigir si ya está autenticado
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/");
+    }
+  }, [isAuthenticated, router]);
+
+  const password = form.watch("password");
+  useEffect(() => {
+    const requirements = {
+      minLength: Boolean(password && password.length >= 8),
+      hasUppercase: Boolean(password && /[A-Z]/.test(password)),
+      hasLowercase: Boolean(password && /[a-z]/.test(password)),
+      hasNumberOrSymbol: Boolean(
+        password && /[0-9!@#$%^&*(),.?":{}|<>]/.test(password)
+      ),
+    };
+    setPasswordRequirements(requirements);
+  }, [password]);
 
   async function onSubmit(values: FormValues) {
     const { name, email, password, birthdate } = values;
-
     try {
       setIsLoading(true);
       const registro = await axios.post(
@@ -92,44 +123,38 @@ export default function Signup() {
         }
       );
       setIsLoading(false);
-
       if (!registro.data.proceso) {
-      toast.error(registro.data.message || "Error al registrarse");
-      return;
-     }
-
+        toast.error(registro.data.message || "Error al registrarse");
+        return;
+      }
       toast.success("Registro exitoso.");
-
-      const loginResponse = await axios.post("https://red-networking-backend.vercel.app/auth/login", {
-        email,
-        password,
-      });
-
+      const loginResponse = await axios.post(
+        "https://red-networking-backend.vercel.app/auth/login",
+        {
+          email,
+          password,
+        }
+      );
       if (loginResponse.data.proceso) {
         const token = loginResponse.data.token;
-        console.log(loginResponse.data)
-        
-        // Extraer datos del usuario de la respuesta
-        const userId = loginResponse.data.token?.id || loginResponse.data.user?.id || loginResponse.data.userId || loginResponse.data.id;
+        const userId =
+          loginResponse.data.token?.id ||
+          loginResponse.data.user?.id ||
+          loginResponse.data.userId ||
+          loginResponse.data.id;
         const userData = {
           id: userId,
           email: email,
           name: name,
-          role: loginResponse.data.user?.role || ''
+          role: loginResponse.data.user?.role || "",
         };
-        
-        console.log('User data extracted:', userData);
-        
-        // Usar el contexto de autenticación con datos completos del usuario
         login(token, userData);
-
         setTimeout(() => {
           router.push("/");
         }, 1500);
-    } else {
-      toast.error(loginResponse.data.message || "No se pudo iniciar sesión");
-    }
-
+      } else {
+        toast.error(loginResponse.data.message || "No se pudo iniciar sesión");
+      }
     } catch (error) {
       console.error(error);
       setIsLoading(false);
@@ -228,7 +253,7 @@ export default function Signup() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-[#58A6FF]">Password</FormLabel>
+                  <FormLabel className="text-[#58A6FF]">Contraseña</FormLabel>
                   <FormControl className="text-white">
                     <div className="relative">
                       <Input
@@ -249,6 +274,67 @@ export default function Signup() {
                       </button>
                     </div>
                   </FormControl>
+
+                  {/* Requisitos de contraseña interactivos */}
+                  <div className="mt-2 space-y-1">
+                    <div
+                      className={`flex items-center gap-2 text-sm ${
+                        passwordRequirements.minLength
+                          ? "text-[#58A6FF]"
+                          : "text-gray-400"
+                      }`}
+                    >
+                      {passwordRequirements.minLength ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <X className="h-4 w-4" />
+                      )}
+                      Mínimo 8 caracteres
+                    </div>
+                    <div
+                      className={`flex items-center gap-2 text-sm ${
+                        passwordRequirements.hasUppercase
+                          ? "text-[#58A6FF]"
+                          : "text-gray-400"
+                      }`}
+                    >
+                      {passwordRequirements.hasUppercase ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <X className="h-4 w-4" />
+                      )}
+                      Debe contener al menos una letra mayúscula
+                    </div>
+                    <div
+                      className={`flex items-center gap-2 text-sm ${
+                        passwordRequirements.hasLowercase
+                          ? "text-[#58A6FF]"
+                          : "text-gray-400"
+                      }`}
+                    >
+                      {passwordRequirements.hasLowercase ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <X className="h-4 w-4" />
+                      )}
+                      Debe contener al menos una letra minúscula
+                    </div>
+                    <div
+                      className={`flex items-center gap-2 text-sm ${
+                        passwordRequirements.hasNumberOrSymbol
+                          ? "text-[#58A6FF]"
+                          : "text-gray-400"
+                      }`}
+                    >
+                      {passwordRequirements.hasNumberOrSymbol ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <X className="h-4 w-4" />
+                      )}
+                      Debe contener al menos un número o símbolo
+                    </div>
+                  </div>
+
                   <FormMessage />
                 </FormItem>
               )}
